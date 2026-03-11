@@ -117,9 +117,9 @@ export function RecurringFormDrawer({
             </DrawerTitle>
           </DrawerHeader>
 
-          <div className="space-y-4 px-4">
-            <div className="space-y-2">
-              <Label htmlFor="event-name">Nombre</Label>
+          <div className="space-y-5 px-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="event-name" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
               <Input
                 id="event-name"
                 placeholder="Ej: Netflix, Renta, Tarjeta"
@@ -128,21 +128,21 @@ export function RecurringFormDrawer({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="event-amount">Monto por defecto</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="event-amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Monto por defecto</Label>
               <Input
                 id="event-amount"
                 type="number"
                 placeholder="0"
                 value={defaultAmount}
                 onChange={(e) => setDefaultAmount(e.target.value)}
-                className="text-xl font-bold"
+                className="h-12 text-xl font-semibold tabular-nums"
                 inputMode="numeric"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="event-day">Día del mes</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="event-day" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Dia del mes</Label>
               <Input
                 id="event-day"
                 type="number"
@@ -153,8 +153,8 @@ export function RecurringFormDrawer({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Categoría</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
               <Select
                 value={category}
                 onValueChange={(v) => setCategory(v as Category)}
@@ -172,20 +172,20 @@ export function RecurringFormDrawer({
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label>Responsable</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Responsable</Label>
               <UserSelector value={userId} onChange={setUserId} />
             </div>
           </div>
 
           <DrawerFooter>
-            <Button onClick={handleSubmit} className="w-full">
+            <Button onClick={handleSubmit} className="w-full h-11 rounded-xl font-semibold tracking-wide active:scale-[0.98] active:translate-y-[1px] transition-all">
               {editEvent ? "Guardar cambios" : "Crear evento"}
             </Button>
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="w-full"
+              className="w-full h-11 rounded-xl font-medium active:scale-[0.98] transition-all"
             >
               Cancelar
             </Button>

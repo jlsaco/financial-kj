@@ -12,8 +12,8 @@ export function AmountDisplay({ amount, type, className }: AmountDisplayProps) {
   return (
     <span
       className={cn(
-        "font-semibold tabular-nums",
-        type === "ingreso" ? "text-green-600" : "text-red-600",
+        "font-semibold tabular-nums font-mono",
+        type === "ingreso" ? "text-emerald-600" : "text-rose-500",
         className
       )}
     >

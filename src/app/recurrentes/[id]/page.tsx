@@ -52,67 +52,59 @@ export default function RecurringDetailPage() {
   return (
     <div>
       {/* Header */}
-      <div className="sticky top-0 z-40 border-b bg-background px-4 py-3">
+      <div className="sticky top-0 z-40 border-b border-border/40 bg-card/80 shadow-[0_1px_3px_rgba(0,0,0,0.03)] backdrop-blur-xl px-4 py-3">
         <div className="mx-auto max-w-lg">
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+            <button
               onClick={() => router.push("/recurrentes")}
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent active:scale-95"
             >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="flex-1 truncate text-lg font-bold">{event.name}</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
+              <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
+            </button>
+            <h1 className="flex-1 truncate text-base font-semibold tracking-tight">{event.name}</h1>
+            <button
               onClick={() => setEditOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-accent active:scale-95"
             >
-              <Pencil className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive"
+              <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+            <button
               onClick={() => setDeleteOpen(true)}
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-destructive/70 transition-colors hover:bg-destructive/10 active:scale-95"
             >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
           </div>
         </div>
       </div>
 
       <div className="space-y-4 p-4">
         {/* Event info card */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-2">
-                <CategoryBadge category={event.category} />
-                <div className="flex items-center gap-2">
-                  <UserAvatar userId={event.userId} />
-                  <span className="text-sm text-muted-foreground">
-                    {USERS[event.userId].name}
-                  </span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold">
-                  {formatCurrency(event.defaultAmount)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Día {event.dayOfMonth} de cada mes
-                </p>
+        <div className="rounded-2xl border border-border/30 bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-4px_rgba(0,0,0,0.06)]">
+          <div className="flex items-center justify-between">
+            <div className="space-y-2.5">
+              <CategoryBadge category={event.category} />
+              <div className="flex items-center gap-2">
+                <UserAvatar userId={event.userId} />
+                <span className="text-[13px] text-muted-foreground/70">
+                  {USERS[event.userId].name}
+                </span>
               </div>
             </div>
-          </CardContent>
-        </Card>
+            <div className="text-right">
+              <p className="text-2xl font-semibold tracking-tight tabular-nums font-mono">
+                {formatCurrency(event.defaultAmount)}
+              </p>
+              <p className="text-[11px] text-muted-foreground/60">
+                Dia {event.dayOfMonth} de cada mes
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Payment timeline */}
         <div>
-          <h2 className="mb-3 text-sm font-semibold">Pagos por mes</h2>
+          <h2 className="mb-3 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">Pagos por mes</h2>
           <PaymentTimeline event={event} />
         </div>
       </div>

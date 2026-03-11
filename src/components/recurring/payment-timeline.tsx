@@ -118,7 +118,7 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
   return (
     <div className="relative pl-6">
       {/* Timeline line */}
-      <div className="absolute left-[11px] top-0 h-full w-0.5 bg-border" />
+      <div className="absolute left-[11px] top-0 h-full w-px bg-border/50" />
 
       {months.map(({ month, year }) => {
         const config = getConfig(month, year);
@@ -132,21 +132,22 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
           <div
             key={`${month}-${year}`}
             className={cn(
-              "relative mb-4 rounded-lg border p-3",
-              isCurrent && "border-primary bg-primary/5",
-              config?.isPaid && "border-green-200 bg-green-50"
+              "relative mb-3 rounded-xl border p-3.5 transition-colors",
+              isCurrent && "border-primary/30 bg-primary/5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]",
+              config?.isPaid && "border-emerald-200/60 bg-emerald-50/50",
+              !isCurrent && !config?.isPaid && "border-border/30"
             )}
           >
             {/* Timeline dot */}
             <div
               className={cn(
-                "absolute -left-6 top-4 h-3 w-3 rounded-full border-2 border-background",
+                "absolute -left-6 top-4 h-2.5 w-2.5 rounded-full border-2 border-background",
                 config?.isPaid
-                  ? "bg-green-500"
+                  ? "bg-emerald-500"
                   : isCurrent
                   ? "bg-primary"
                   : isPast
-                  ? "bg-muted-foreground"
+                  ? "bg-muted-foreground/40"
                   : "bg-muted"
               )}
             />
@@ -155,100 +156,100 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
               <div>
                 <span
                   className={cn(
-                    "text-sm font-medium capitalize",
+                    "text-[13px] font-medium capitalize",
                     isCurrent && "text-primary"
                   )}
                 >
                   {getMonthLabel(month, year)}
                 </span>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  Día {effectiveDay}
+                <span className="ml-2 text-[11px] text-muted-foreground/60">
+                  Dia {effectiveDay}
                 </span>
               </div>
 
               {/* Status badge */}
               {config?.isPaid ? (
-                <Badge variant="secondary" className="bg-green-100 text-green-700">
+                <span className="inline-flex items-center rounded-lg bg-emerald-100/80 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
                   <Check className="mr-1 h-3 w-3" /> Pagado
-                </Badge>
+                </span>
               ) : isCurrent ? (
-                <Badge variant="secondary" className={
+                <span className={cn(
+                  "inline-flex items-center rounded-lg px-2 py-0.5 text-[11px] font-medium",
                   diffDays < 0
-                    ? "bg-red-100 text-red-700"
+                    ? "bg-rose-100/80 text-rose-700"
                     : diffDays <= 5
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-blue-100 text-blue-700"
-                }>
+                    ? "bg-amber-100/80 text-amber-700"
+                    : "bg-blue-100/80 text-blue-700"
+                )}>
                   {diffDays < 0 ? (
                     <><AlertCircle className="mr-1 h-3 w-3" /> Vencido</>
                   ) : diffDays === 0 ? (
                     <><Clock className="mr-1 h-3 w-3" /> Hoy</>
                   ) : (
-                    <><Clock className="mr-1 h-3 w-3" /> En {diffDays} días</>
+                    <><Clock className="mr-1 h-3 w-3" /> En {diffDays} dias</>
                   )}
-                </Badge>
+                </span>
               ) : isPast && !config?.isPaid ? (
-                <Badge variant="secondary" className="bg-red-100 text-red-700">
+                <span className="inline-flex items-center rounded-lg bg-rose-100/80 px-2 py-0.5 text-[11px] font-medium text-rose-700">
                   <AlertCircle className="mr-1 h-3 w-3" /> No pagado
-                </Badge>
+                </span>
               ) : null}
             </div>
 
             {/* Amount row */}
-            <div className="mt-2 flex items-center justify-between">
+            <div className="mt-2.5 flex items-center justify-between">
               {isEditing ? (
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
                     value={editAmount}
                     onChange={(e) => setEditAmount(e.target.value)}
-                    className="h-8 w-32"
+                    className="h-8 w-28 text-[13px] tabular-nums"
                     inputMode="numeric"
                     autoFocus
                   />
-                  <Button size="sm" className="h-8" onClick={() => saveAmount(month, year)}>
-                    Guardar
+                  <Button size="sm" className="h-7 rounded-lg px-3 text-[12px] active:scale-[0.97]" onClick={() => saveAmount(month, year)}>
+                    OK
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8"
+                  <button
+                    className="h-7 px-2 text-[12px] text-muted-foreground hover:text-foreground"
                     onClick={() => setEditingMonth(null)}
                   >
-                    Cancelar
-                  </Button>
+                    X
+                  </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold">{formatCurrency(amount)}</span>
+                  <span className="text-base font-semibold tabular-nums font-mono">{formatCurrency(amount)}</span>
                   {config && config.amount !== event.defaultAmount && (
-                    <Badge variant="outline" className="text-[10px]">
+                    <span className="rounded-md bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                       Personalizado
-                    </Badge>
+                    </span>
                   )}
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6"
+                  <button
+                    className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground/40 hover:bg-accent hover:text-foreground transition-colors"
                     onClick={() => startEditing(month, year, amount)}
                   >
-                    <Pencil className="h-3 w-3" />
-                  </Button>
+                    <Pencil className="h-3 w-3" strokeWidth={1.5} />
+                  </button>
                 </div>
               )}
 
-              <Button
-                size="sm"
-                variant={config?.isPaid ? "outline" : "default"}
-                className="h-8"
+              <button
                 onClick={() => togglePaid(month, year)}
+                className={cn(
+                  "h-7 rounded-lg px-3 text-[12px] font-medium transition-all active:scale-[0.97]",
+                  config?.isPaid
+                    ? "border border-border/50 text-muted-foreground hover:bg-accent"
+                    : "bg-primary text-primary-foreground hover:bg-primary/90"
+                )}
               >
-                {config?.isPaid ? "Desmarcar" : "Marcar pagado"}
-              </Button>
+                {config?.isPaid ? "Desmarcar" : "Pagado"}
+              </button>
             </div>
 
             {config?.note && (
-              <p className="mt-1 text-xs text-muted-foreground">{config.note}</p>
+              <p className="mt-1.5 text-[11px] text-muted-foreground/60">{config.note}</p>
             )}
           </div>
         );

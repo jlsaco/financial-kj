@@ -13,7 +13,7 @@ export function BudgetOverview() {
   const summary = getMonthSummary(selectedMonth, selectedYear);
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {state.budgets.map((budget) => {
         const spent = summary.byCategory[budget.category as Category] ?? 0;
         const pct = budget.monthlyBudget > 0
@@ -21,13 +21,25 @@ export function BudgetOverview() {
           : 0;
         const config = CATEGORIES[budget.category as Category];
 
+        const barColor =
+          pct >= 100
+            ? "bg-rose-500"
+            : pct >= 80
+            ? "bg-amber-500"
+            : "bg-emerald-500";
+
         return (
           <div key={budget.category} className="flex items-center gap-3">
-            <div className="w-20 text-xs font-medium truncate">
+            <div className="w-16 text-[11px] font-medium text-muted-foreground truncate">
               {config?.label}
             </div>
-            <Progress value={Math.min(pct, 100)} className="h-2 flex-1" />
-            <div className="w-20 text-right text-xs text-muted-foreground">
+            <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-muted/60">
+              <div
+                className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out ${barColor}`}
+                style={{ width: `${Math.min(pct, 100)}%` }}
+              />
+            </div>
+            <div className="w-16 text-right font-mono text-[11px] text-muted-foreground">
               {formatCurrency(spent)}
             </div>
           </div>

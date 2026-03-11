@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { useFinance } from "@/contexts/finance-context";
 import { RecurringEvent } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Plus, CalendarClock } from "lucide-react";
+import { Plus, Repeat } from "lucide-react";
 
 export default function RecurrentesPage() {
   const { state } = useFinance();
@@ -41,9 +41,12 @@ export default function RecurrentesPage() {
       <PageHeader
         title="Recurrentes"
         action={
-          <Button size="sm" onClick={handleAdd}>
-            <Plus className="mr-1 h-4 w-4" /> Nuevo
-          </Button>
+          <button
+            onClick={handleAdd}
+            className="inline-flex items-center rounded-xl bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
+          >
+            <Plus className="mr-1 h-3.5 w-3.5" strokeWidth={2} /> Nuevo
+          </button>
         }
       />
 
@@ -51,13 +54,13 @@ export default function RecurrentesPage() {
         {activeEvents.length === 0 && inactiveEvents.length === 0 ? (
           <EmptyState
             message="No hay eventos recurrentes"
-            icon={<CalendarClock className="h-10 w-10" />}
+            icon={<Repeat className="h-10 w-10" strokeWidth={1} />}
           />
         ) : (
           <>
             {activeEvents.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground">
+                <h2 className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
                   Activos ({activeEvents.length})
                 </h2>
                 {activeEvents.map((event) => (
@@ -68,7 +71,7 @@ export default function RecurrentesPage() {
 
             {inactiveEvents.length > 0 && (
               <div className="mt-6 space-y-3">
-                <h2 className="text-sm font-semibold text-muted-foreground">
+                <h2 className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
                   Inactivos ({inactiveEvents.length})
                 </h2>
                 {inactiveEvents.map((event) => (

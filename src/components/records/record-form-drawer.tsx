@@ -114,63 +114,61 @@ export function RecordFormDrawer({
             </DrawerTitle>
           </DrawerHeader>
 
-          <div className="space-y-4 px-4">
+          <div className="space-y-5 px-4">
             {/* Type selector */}
             <div className="flex gap-2">
-              <Button
+              <button
                 type="button"
-                variant={type === "gasto" ? "default" : "outline"}
-                className={
-                  type === "gasto"
-                    ? "flex-1 bg-red-600 hover:bg-red-700"
-                    : "flex-1"
-                }
                 onClick={() => setType("gasto")}
+                className={`flex-1 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
+                  type === "gasto"
+                    ? "bg-rose-500 text-white shadow-[0_2px_8px_rgba(244,63,94,0.3)]"
+                    : "border border-border/60 text-muted-foreground hover:border-rose-200 hover:text-rose-600"
+                }`}
               >
                 Gasto
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
-                variant={type === "ingreso" ? "default" : "outline"}
-                className={
-                  type === "ingreso"
-                    ? "flex-1 bg-green-600 hover:bg-green-700"
-                    : "flex-1"
-                }
                 onClick={() => setType("ingreso")}
+                className={`flex-1 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
+                  type === "ingreso"
+                    ? "bg-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                    : "border border-border/60 text-muted-foreground hover:border-emerald-200 hover:text-emerald-600"
+                }`}
               >
                 Ingreso
-              </Button>
+              </button>
             </div>
 
             {/* Amount */}
-            <div className="space-y-2">
-              <Label htmlFor="amount">Valor</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Valor</Label>
               <Input
                 id="amount"
                 type="number"
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="text-2xl font-bold"
+                className="h-12 text-2xl font-semibold tabular-nums"
                 inputMode="numeric"
               />
             </div>
 
             {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="name" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
               <Input
                 id="name"
-                placeholder="Descripción del registro"
+                placeholder="Descripcion del registro"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
 
             {/* Category */}
-            <div className="space-y-2">
-              <Label>Categoría</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
               <Select
                 value={category}
                 onValueChange={(v) => setCategory(v as Category)}
@@ -189,8 +187,8 @@ export function RecordFormDrawer({
             </div>
 
             {/* Date */}
-            <div className="space-y-2">
-              <Label htmlFor="date">Fecha</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha</Label>
               <Input
                 id="date"
                 type="date"
@@ -200,20 +198,20 @@ export function RecordFormDrawer({
             </div>
 
             {/* User */}
-            <div className="space-y-2">
-              <Label>Registrado por</Label>
+            <div className="space-y-1.5">
+              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>
               <UserSelector value={userId} onChange={setUserId} />
             </div>
           </div>
 
           <DrawerFooter>
-            <Button onClick={handleSubmit} className="w-full">
+            <Button onClick={handleSubmit} className="w-full h-11 rounded-xl font-semibold tracking-wide active:scale-[0.98] active:translate-y-[1px] transition-all">
               {editRecord ? "Guardar cambios" : "Agregar registro"}
             </Button>
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="w-full"
+              className="w-full h-11 rounded-xl font-medium active:scale-[0.98] transition-all"
             >
               Cancelar
             </Button>

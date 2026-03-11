@@ -4,7 +4,6 @@ import Link from "next/link";
 import { RecurringEvent } from "@/types";
 import { CategoryBadge } from "@/components/shared/category-badge";
 import { UserAvatar } from "@/components/shared/user-selector";
-import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { formatCurrency } from "@/lib/formatters";
 import { ChevronRight } from "lucide-react";
@@ -28,27 +27,25 @@ export function RecurringCard({ event }: RecurringCardProps) {
 
   return (
     <Link href={`/recurrentes/${event.id}`}>
-      <Card className="transition-colors hover:bg-accent/50">
-        <CardContent className="flex items-center gap-3 py-4">
-          <UserAvatar userId={event.userId} />
-          <div className="flex-1 min-w-0">
-            <p className="truncate text-sm font-medium">{event.name}</p>
-            <div className="mt-1 flex items-center gap-2">
-              <CategoryBadge category={event.category} className="text-[10px]" />
-              <span className="text-xs text-muted-foreground">
-                Día {event.dayOfMonth}
-              </span>
-            </div>
+      <div className="group flex items-center gap-3 rounded-2xl border border-border/30 bg-card px-4 py-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all hover:bg-accent/40 active:scale-[0.99]">
+        <UserAvatar userId={event.userId} />
+        <div className="flex-1 min-w-0">
+          <p className="truncate text-[13px] font-medium">{event.name}</p>
+          <div className="mt-1 flex items-center gap-2">
+            <CategoryBadge category={event.category} className="text-[10px] py-0 px-1.5" />
+            <span className="text-[11px] text-muted-foreground/60">
+              Dia {event.dayOfMonth}
+            </span>
           </div>
-          <p className="text-sm font-semibold">
-            {formatCurrency(event.defaultAmount)}
-          </p>
-          <div onClick={toggleActive}>
-            <Switch checked={event.isActive} />
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </CardContent>
-      </Card>
+        </div>
+        <p className="text-[13px] font-semibold tabular-nums font-mono">
+          {formatCurrency(event.defaultAmount)}
+        </p>
+        <div onClick={toggleActive}>
+          <Switch checked={event.isActive} />
+        </div>
+        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" strokeWidth={1.5} />
+      </div>
     </Link>
   );
 }

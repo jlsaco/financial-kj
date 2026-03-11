@@ -3,18 +3,18 @@ import { CATEGORIES } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import {
   Car,
-  Apple,
+  HeartPulse,
   Home,
   CreditCard,
-  Zap,
+  Wifi,
 } from "lucide-react";
 
 const ICON_MAP = {
   Car,
-  Apple,
+  HeartPulse,
   Home,
   CreditCard,
-  Zap,
+  Wifi,
 };
 
 interface CategoryBadgeProps {

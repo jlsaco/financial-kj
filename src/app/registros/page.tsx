@@ -66,39 +66,45 @@ export default function RegistrosPage() {
           value={typeFilter}
           onValueChange={(v) => setTypeFilter(v as "todos" | RecordType)}
         >
-          <TabsList className="w-full">
-            <TabsTrigger value="todos" className="flex-1">
+          <TabsList className="w-full rounded-xl">
+            <TabsTrigger value="todos" className="flex-1 rounded-lg text-[13px]">
               Todos
             </TabsTrigger>
-            <TabsTrigger value="gasto" className="flex-1">
+            <TabsTrigger value="gasto" className="flex-1 rounded-lg text-[13px]">
               Gastos
             </TabsTrigger>
-            <TabsTrigger value="ingreso" className="flex-1">
+            <TabsTrigger value="ingreso" className="flex-1 rounded-lg text-[13px]">
               Ingresos
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <Badge
-            variant={categoryFilter === "todos" ? "default" : "outline"}
-            className="shrink-0 cursor-pointer"
+        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <button
             onClick={() => setCategoryFilter("todos")}
+            className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all active:scale-95 ${
+              categoryFilter === "todos"
+                ? "bg-foreground text-background"
+                : "bg-muted/60 text-muted-foreground hover:bg-muted"
+            }`}
           >
             Todas
-          </Badge>
+          </button>
           {ALL_CATEGORIES.map((cat) => (
-            <Badge
+            <button
               key={cat}
-              variant={categoryFilter === cat ? "default" : "outline"}
-              className="shrink-0 cursor-pointer"
               onClick={() =>
                 setCategoryFilter(categoryFilter === cat ? "todos" : cat)
               }
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all active:scale-95 ${
+                categoryFilter === cat
+                  ? "bg-foreground text-background"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              }`}
             >
               {CATEGORIES[cat].label}
-            </Badge>
+            </button>
           ))}
         </div>
       </div>

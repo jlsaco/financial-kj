@@ -45,40 +45,40 @@ export default function PresupuestosPage() {
 
       <div className="space-y-4 p-4">
         {/* Total summary */}
-        <Card>
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total gastado</p>
-                <p className="text-xl font-bold">{formatCurrency(totalSpent)}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Presupuesto total</p>
-                <p className="text-xl font-bold">{formatCurrency(totalBudget)}</p>
-              </div>
+        <div className="rounded-2xl bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-4px_rgba(0,0,0,0.06)] border border-border/30">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Total gastado</p>
+              <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums font-mono">{formatCurrency(totalSpent)}</p>
             </div>
-            <div className="mt-2 text-center">
-              <span
-                className={`text-sm font-medium ${
-                  totalBudget - totalSpent >= 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {totalBudget - totalSpent >= 0 ? "Disponible: " : "Excedido: "}
-                {formatCurrency(Math.abs(totalBudget - totalSpent))}
-              </span>
+            <div className="text-right">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Presupuesto</p>
+              <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums font-mono">{formatCurrency(totalBudget)}</p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="mt-3 pt-3 border-t border-border/30 text-center">
+            <span
+              className={`text-[13px] font-semibold tabular-nums ${
+                totalBudget - totalSpent >= 0 ? "text-emerald-600" : "text-rose-500"
+              }`}
+            >
+              {totalBudget - totalSpent >= 0 ? "Disponible: " : "Excedido: "}
+              {formatCurrency(Math.abs(totalBudget - totalSpent))}
+            </span>
+          </div>
+        </div>
 
         {/* Budget cards */}
-        {state.budgets.map((budget) => (
-          <BudgetCard
-            key={budget.category}
-            budget={budget}
-            spent={summary.byCategory[budget.category] ?? 0}
-            onEdit={handleEdit}
-          />
-        ))}
+        <div className="space-y-3">
+          {state.budgets.map((budget) => (
+            <BudgetCard
+              key={budget.category}
+              budget={budget}
+              spent={summary.byCategory[budget.category] ?? 0}
+              onEdit={handleEdit}
+            />
+          ))}
+        </div>
       </div>
 
       <BudgetEditDrawer

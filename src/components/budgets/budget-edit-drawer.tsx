@@ -66,28 +66,28 @@ export function BudgetEditDrawer({
               Editar presupuesto - {CATEGORIES[category].label}
             </DrawerTitle>
           </DrawerHeader>
-          <div className="space-y-4 px-4">
-            <div className="space-y-2">
-              <Label htmlFor="budget-amount">Presupuesto mensual</Label>
+          <div className="space-y-5 px-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="budget-amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Presupuesto mensual</Label>
               <Input
                 id="budget-amount"
                 type="number"
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="text-2xl font-bold"
+                className="h-12 text-2xl font-semibold tabular-nums"
                 inputMode="numeric"
               />
             </div>
           </div>
           <DrawerFooter>
-            <Button onClick={handleSubmit} className="w-full">
+            <Button onClick={handleSubmit} className="w-full h-11 rounded-xl font-semibold tracking-wide active:scale-[0.98] active:translate-y-[1px] transition-all">
               Guardar
             </Button>
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="w-full"
+              className="w-full h-11 rounded-xl font-medium active:scale-[0.98] transition-all"
             >
               Cancelar
             </Button>
