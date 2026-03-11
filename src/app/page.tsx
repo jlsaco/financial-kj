@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { BudgetOverview } from "@/components/dashboard/budget-overview";
+import { UpcomingEvents } from "@/components/dashboard/upcoming-events";
 import { RecordList } from "@/components/records/record-list";
 import { RecordFormDrawer } from "@/components/records/record-form-drawer";
 import { FabButton } from "@/components/records/fab-button";
@@ -66,6 +67,8 @@ export default function DashboardPage() {
 
       <div className="space-y-4 p-4">
         <SummaryCard />
+
+        <UpcomingEvents />
 
         <div>
           <h2 className="mb-2 text-sm font-semibold">Presupuestos</h2>
