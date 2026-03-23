@@ -27,24 +27,24 @@ export function RecurringCard({ event }: RecurringCardProps) {
 
   return (
     <Link href={`/recurrentes/${event.id}`}>
-      <div className="group flex items-center gap-3 rounded-2xl border border-border/30 bg-card px-4 py-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all hover:bg-accent/40 active:scale-[0.99]">
+      <div className="group flex items-center gap-3 rounded-2xl bg-card px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)] transition-all hover:bg-accent/40 active:scale-[0.99]">
         <UserAvatar userId={event.userId} />
         <div className="flex-1 min-w-0">
-          <p className="truncate text-[13px] font-medium">{event.name}</p>
-          <div className="mt-1 flex items-center gap-2">
-            <CategoryBadge category={event.category} className="text-[10px] py-0 px-1.5" />
-            <span className="text-[11px] text-muted-foreground/60">
+          <p className="truncate text-sm font-semibold">{event.name}</p>
+          <div className="mt-1.5 flex items-center gap-2">
+            <CategoryBadge category={event.category} />
+            <span className="text-xs text-foreground/40">
               Dia {event.dayOfMonth}
             </span>
           </div>
         </div>
-        <p className="text-[13px] font-semibold tabular-nums font-mono">
+        <p className="text-sm font-bold tabular-nums font-mono">
           {formatCurrency(event.defaultAmount)}
         </p>
         <div onClick={toggleActive}>
           <Switch checked={event.isActive} />
         </div>
-        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40" strokeWidth={1.5} />
+        <ChevronRight className="h-4 w-4 text-foreground/25" strokeWidth={1.5} />
       </div>
     </Link>
   );

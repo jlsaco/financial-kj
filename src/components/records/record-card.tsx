@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { MoreVertical, Pencil, Trash2 } from "lucide-react";
 
 interface RecordCardProps {
@@ -21,27 +20,27 @@ interface RecordCardProps {
 
 export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
   return (
-    <div className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-accent/40 active:bg-accent/60">
+    <div className="group flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-accent/40 active:bg-accent/60">
       <UserAvatar userId={record.userId} />
       <div className="flex-1 min-w-0">
-        <p className="truncate text-[13px] font-medium">{record.name}</p>
-        <CategoryBadge category={record.category} className="mt-1 text-[10px] py-0 px-1.5" />
+        <p className="truncate text-sm font-medium">{record.name}</p>
+        <CategoryBadge category={record.category} className="mt-1" />
       </div>
-      <AmountDisplay amount={record.amount} type={record.type} className="text-[13px]" />
+      <AmountDisplay amount={record.amount} type={record.type} className="text-sm" />
       <DropdownMenu>
-        <DropdownMenuTrigger className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent">
-          <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+        <DropdownMenuTrigger className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent">
+          <MoreVertical className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onEdit(record)}>
-            <Pencil className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+            <Pencil className="mr-2 h-4 w-4" strokeWidth={1.5} />
             Editar
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => onDelete(record)}
             className="text-destructive"
           >
-            <Trash2 className="mr-2 h-3.5 w-3.5" strokeWidth={1.5} />
+            <Trash2 className="mr-2 h-4 w-4" strokeWidth={1.5} />
             Eliminar
           </DropdownMenuItem>
         </DropdownMenuContent>

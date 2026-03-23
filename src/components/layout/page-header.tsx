@@ -15,32 +15,32 @@ export function PageHeader({ title, showMonthNav, action }: PageHeaderProps) {
   const { selectedMonth, selectedYear, prevMonth, nextMonth } = useUI();
 
   return (
-    <div className="sticky top-0 z-40 border-b border-border/40 bg-card/80 px-4 py-3 backdrop-blur-xl">
+    <div className="sticky top-0 z-40 bg-background px-4 pb-2 pt-4">
       <div className="mx-auto max-w-lg">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
+          <h1 className="text-xl font-bold tracking-tight">{title}</h1>
           {action}
         </div>
         {showMonthNav && (
-          <div className="mt-1 flex items-center justify-center gap-2">
+          <div className="mt-2 flex items-center justify-center gap-3">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 rounded-lg transition-transform active:scale-95"
+              className="h-8 w-8 rounded-xl transition-transform active:scale-95"
               onClick={prevMonth}
             >
-              <ChevronLeft className="h-4 w-4" strokeWidth={1.5} />
+              <ChevronLeft className="h-4 w-4" strokeWidth={2} />
             </Button>
-            <span className="min-w-[150px] text-center text-[13px] font-medium capitalize text-muted-foreground">
+            <span className="min-w-[160px] text-center text-sm font-medium capitalize text-foreground/70">
               {formatMonthYear(selectedMonth, selectedYear)}
             </span>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 rounded-lg transition-transform active:scale-95"
+              className="h-8 w-8 rounded-xl transition-transform active:scale-95"
               onClick={nextMonth}
             >
-              <ChevronRight className="h-4 w-4" strokeWidth={1.5} />
+              <ChevronRight className="h-4 w-4" strokeWidth={2} />
             </Button>
           </div>
         )}

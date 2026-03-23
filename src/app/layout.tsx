@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Outfit, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { FinanceProvider } from "@/contexts/finance-context";
 import { UIProvider } from "@/contexts/ui-context";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import "./globals.css";
 
-const dmSans = DM_Sans({
+const outfit = Outfit({
   variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -38,10 +38,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
+      <body className={`${outfit.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <FinanceProvider>
           <UIProvider>
-            <main className="mx-auto min-h-screen max-w-lg pb-24">
+            <main className="mx-auto min-h-screen max-w-lg pb-28">
               {children}
             </main>
             <BottomNav />

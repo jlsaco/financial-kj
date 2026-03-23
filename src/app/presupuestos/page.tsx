@@ -7,7 +7,6 @@ import { BudgetEditDrawer } from "@/components/budgets/budget-edit-drawer";
 import { useFinance } from "@/contexts/finance-context";
 import { useUI } from "@/contexts/ui-context";
 import { Category } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/formatters";
 
 export default function PresupuestosPage() {
@@ -43,22 +42,22 @@ export default function PresupuestosPage() {
     <div>
       <PageHeader title="Presupuestos" showMonthNav />
 
-      <div className="space-y-4 p-4">
+      <div className="space-y-5 p-4">
         {/* Total summary */}
-        <div className="rounded-2xl bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-4px_rgba(0,0,0,0.06)] border border-border/30">
+        <div className="rounded-2xl bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)]">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Total gastado</p>
-              <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums font-mono">{formatCurrency(totalSpent)}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-foreground/40">Total gastado</p>
+              <p className="mt-1.5 text-2xl font-bold tracking-tight tabular-nums font-mono">{formatCurrency(totalSpent)}</p>
             </div>
             <div className="text-right">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Presupuesto</p>
-              <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums font-mono">{formatCurrency(totalBudget)}</p>
+              <p className="text-xs font-medium uppercase tracking-wider text-foreground/40">Presupuesto</p>
+              <p className="mt-1.5 text-2xl font-bold tracking-tight tabular-nums font-mono">{formatCurrency(totalBudget)}</p>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-border/30 text-center">
+          <div className="mt-4 pt-4 border-t border-border/30 text-center">
             <span
-              className={`text-[13px] font-semibold tabular-nums ${
+              className={`text-sm font-bold tabular-nums ${
                 totalBudget - totalSpent >= 0 ? "text-emerald-600" : "text-rose-500"
               }`}
             >

@@ -65,21 +65,21 @@ export default function DashboardPage() {
     <div>
       <PageHeader title="FinanceKJ" showMonthNav />
 
-      <div className="space-y-5 p-4">
+      <div className="space-y-6 p-4">
         <SummaryCard />
 
         <UpcomingEvents />
 
         <div>
-          <h2 className="mb-2.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">Presupuestos</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/35">Presupuestos</h2>
           <BudgetOverview />
         </div>
       </div>
 
-      <div className="mt-1">
-        <div className="flex items-center justify-between px-4 py-2">
-          <h2 className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">Registros recientes</h2>
-          <span className="text-[11px] tabular-nums text-muted-foreground/50">
+      <div className="mt-2">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">Registros recientes</h2>
+          <span className="text-xs tabular-nums text-foreground/30">
             {monthRecords.length} registros
           </span>
         </div>

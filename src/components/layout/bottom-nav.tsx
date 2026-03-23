@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { href: "/", icon: House, label: "Inicio" },
   { href: "/registros", icon: ArrowLeftRight, label: "Registros" },
   { href: "/recurrentes", icon: Repeat, label: "Recurrentes" },
-  { href: "/presupuestos", icon: Target, label: "Presupuestos" },
+  { href: "/presupuestos", icon: Target, label: "Metas" },
 ];
 
 export function BottomNav() {
@@ -17,9 +17,8 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pb-[env(safe-area-inset-bottom)]">
-      {/* Floating pill container */}
-      <div className="mx-auto max-w-lg px-4 pb-3">
-        <div className="flex h-[62px] items-center justify-around rounded-[20px] border border-white/40 bg-card/85 px-1 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.16),0_0_0_1px_rgba(0,0,0,0.03)] backdrop-blur-2xl">
+      <div className="mx-auto max-w-lg px-5 pb-4">
+        <div className="flex h-[60px] items-center justify-around rounded-2xl border border-white/50 bg-white/80 px-2 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.02)] backdrop-blur-2xl">
           {NAV_ITEMS.map((item) => {
             const isActive =
               item.href === "/"
@@ -30,26 +29,24 @@ export function BottomNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-1.5 transition-all duration-200 active:scale-90",
+                  "relative flex items-center justify-center gap-2 rounded-xl py-2 transition-all duration-300 ease-out active:scale-95",
                   isActive
-                    ? "text-primary"
-                    : "text-muted-foreground/50 hover:text-muted-foreground"
+                    ? "bg-primary px-4 text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+                    : "px-3 text-muted-foreground/60 hover:text-muted-foreground"
                 )}
               >
-                {/* Active pill background */}
-                {isActive && (
-                  <span className="absolute inset-0 rounded-xl bg-primary/8" />
-                )}
                 <item.icon
-                  className={cn(
-                    "relative z-10 h-[20px] w-[20px] transition-all duration-200",
-                  )}
-                  strokeWidth={isActive ? 2.2 : 1.5}
+                  className="h-[22px] w-[22px] shrink-0 transition-all duration-300"
+                  strokeWidth={isActive ? 2 : 1.6}
                 />
-                <span className={cn(
-                  "relative z-10 text-[10px] transition-all duration-200",
-                  isActive ? "font-semibold" : "font-medium"
-                )}>
+                <span
+                  className={cn(
+                    "overflow-hidden whitespace-nowrap text-[13px] font-semibold transition-all duration-300 ease-out",
+                    isActive
+                      ? "max-w-[100px] opacity-100"
+                      : "max-w-0 opacity-0"
+                  )}
+                >
                   {item.label}
                 </span>
               </Link>

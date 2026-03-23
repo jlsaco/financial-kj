@@ -7,7 +7,6 @@ import { RecurringFormDrawer } from "@/components/recurring/recurring-form-drawe
 import { EmptyState } from "@/components/shared/empty-state";
 import { useFinance } from "@/contexts/finance-context";
 import { RecurringEvent } from "@/types";
-import { Button } from "@/components/ui/button";
 import { Plus, Repeat } from "lucide-react";
 
 export default function RecurrentesPage() {
@@ -43,24 +42,24 @@ export default function RecurrentesPage() {
         action={
           <button
             onClick={handleAdd}
-            className="inline-flex items-center rounded-xl bg-primary px-3 py-1.5 text-[13px] font-medium text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
+            className="inline-flex items-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97] shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
           >
-            <Plus className="mr-1 h-3.5 w-3.5" strokeWidth={2} /> Nuevo
+            <Plus className="mr-1.5 h-4 w-4" strokeWidth={2.2} /> Nuevo
           </button>
         }
       />
 
-      <div className="space-y-3 p-4">
+      <div className="space-y-4 p-4">
         {activeEvents.length === 0 && inactiveEvents.length === 0 ? (
           <EmptyState
             message="No hay eventos recurrentes"
-            icon={<Repeat className="h-10 w-10" strokeWidth={1} />}
+            icon={<Repeat className="h-12 w-12" strokeWidth={1} />}
           />
         ) : (
           <>
             {activeEvents.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
                   Activos ({activeEvents.length})
                 </h2>
                 {activeEvents.map((event) => (
@@ -71,7 +70,7 @@ export default function RecurrentesPage() {
 
             {inactiveEvents.length > 0 && (
               <div className="mt-6 space-y-3">
-                <h2 className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
                   Inactivos ({inactiveEvents.length})
                 </h2>
                 {inactiveEvents.map((event) => (

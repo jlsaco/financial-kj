@@ -24,7 +24,7 @@ export function RecordList({ records, onEdit, onDelete }: RecordListProps) {
       {Array.from(grouped.entries()).map(([date, items]) => (
         <div key={date}>
           <div className="sticky top-[105px] z-10 bg-background/80 backdrop-blur-sm px-4 py-2">
-            <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
               {formatDate(date)}
             </p>
           </div>

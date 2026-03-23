@@ -11,14 +11,14 @@ export function SummaryCard() {
   const summary = getMonthSummary(selectedMonth, selectedYear);
 
   return (
-    <div className="rounded-2xl bg-card p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-4px_rgba(0,0,0,0.06)] border border-border/30">
+    <div className="rounded-2xl bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)]">
       {/* Balance hero */}
-      <div className="mb-4">
-        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">
+      <div className="mb-5">
+        <p className="text-xs font-medium uppercase tracking-wider text-foreground/40">
           Balance del mes
         </p>
         <p
-          className={`mt-1 text-3xl font-semibold tracking-tight tabular-nums ${
+          className={`mt-1.5 text-4xl font-bold tracking-tight tabular-nums font-mono ${
             summary.balance >= 0 ? "text-emerald-600" : "text-rose-500"
           }`}
         >
@@ -28,25 +28,25 @@ export function SummaryCard() {
 
       {/* Income / Expense row */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex items-center gap-2.5 rounded-xl bg-emerald-50/60 px-3 py-2.5 border border-emerald-100/80">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600/10">
-            <ArrowUpRight className="h-4 w-4 text-emerald-600" strokeWidth={2} />
+        <div className="flex items-center gap-3 rounded-xl bg-emerald-50/80 px-4 py-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/15">
+            <ArrowUpRight className="h-5 w-5 text-emerald-600" strokeWidth={2.2} />
           </div>
           <div>
-            <p className="text-[11px] text-emerald-700/70">Ingresos</p>
-            <p className="text-sm font-semibold tabular-nums text-emerald-700">
+            <p className="text-xs font-medium text-emerald-700/60">Ingresos</p>
+            <p className="text-base font-bold tabular-nums font-mono text-emerald-700">
               {formatCurrency(summary.totalIncome)}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 rounded-xl bg-rose-50/60 px-3 py-2.5 border border-rose-100/80">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-500/10">
-            <ArrowDownRight className="h-4 w-4 text-rose-500" strokeWidth={2} />
+        <div className="flex items-center gap-3 rounded-xl bg-rose-50/80 px-4 py-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/15">
+            <ArrowDownRight className="h-5 w-5 text-rose-500" strokeWidth={2.2} />
           </div>
           <div>
-            <p className="text-[11px] text-rose-600/70">Gastos</p>
-            <p className="text-sm font-semibold tabular-nums text-rose-600">
+            <p className="text-xs font-medium text-rose-600/60">Gastos</p>
+            <p className="text-base font-bold tabular-nums font-mono text-rose-600">
               {formatCurrency(summary.totalExpenses)}
             </p>
           </div>

@@ -10,7 +10,6 @@ import { useFinance } from "@/contexts/finance-context";
 import { useUI } from "@/contexts/ui-context";
 import { Category, FinanceRecord, RecordType } from "@/types";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
@@ -67,26 +66,26 @@ export default function RegistrosPage() {
           onValueChange={(v) => setTypeFilter(v as "todos" | RecordType)}
         >
           <TabsList className="w-full rounded-xl">
-            <TabsTrigger value="todos" className="flex-1 rounded-lg text-[13px]">
+            <TabsTrigger value="todos" className="flex-1 rounded-lg text-sm">
               Todos
             </TabsTrigger>
-            <TabsTrigger value="gasto" className="flex-1 rounded-lg text-[13px]">
+            <TabsTrigger value="gasto" className="flex-1 rounded-lg text-sm">
               Gastos
             </TabsTrigger>
-            <TabsTrigger value="ingreso" className="flex-1 rounded-lg text-[13px]">
+            <TabsTrigger value="ingreso" className="flex-1 rounded-lg text-sm">
               Ingresos
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {/* Category filter */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setCategoryFilter("todos")}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all active:scale-95 ${
+            className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 ${
               categoryFilter === "todos"
-                ? "bg-foreground text-background"
-                : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+                : "bg-card text-foreground/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:text-foreground"
             }`}
           >
             Todas
@@ -97,10 +96,10 @@ export default function RegistrosPage() {
               onClick={() =>
                 setCategoryFilter(categoryFilter === cat ? "todos" : cat)
               }
-              className={`shrink-0 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all active:scale-95 ${
+              className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 ${
                 categoryFilter === cat
-                  ? "bg-foreground text-background"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
+                  : "bg-card text-foreground/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:text-foreground"
               }`}
             >
               {CATEGORIES[cat].label}
@@ -109,7 +108,7 @@ export default function RegistrosPage() {
         </div>
       </div>
 
-      <div className="mt-2">
+      <div className="mt-3">
         <RecordList
           records={filteredRecords}
           onEdit={handleEdit}

@@ -14,34 +14,34 @@ export function UpcomingEvents() {
 
   return (
     <div>
-      <h2 className="mb-2.5 text-[11px] font-medium uppercase tracking-widest text-muted-foreground/60">Proximos pagos</h2>
+      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/35">Proximos pagos</h2>
       <ScrollArea className="w-full">
-        <div className="flex gap-2.5 pb-2">
+        <div className="flex gap-3 pb-2">
           {upcoming.map((item) => (
             <div
               key={item.recurringEvent.id}
-              className="min-w-[180px] shrink-0 rounded-xl border border-border/30 bg-card p-3.5 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
+              className="min-w-[190px] shrink-0 rounded-2xl bg-card p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)]"
             >
               <div className="flex items-center justify-between">
-                <p className="text-[13px] font-medium truncate">
+                <p className="text-sm font-semibold truncate">
                   {item.recurringEvent.name}
                 </p>
                 {item.daysUntilDue === 0 ? (
-                  <span className="ml-2 shrink-0 inline-flex items-center rounded-md bg-amber-100/80 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                    <AlertCircle className="mr-0.5 h-2.5 w-2.5" /> Hoy
+                  <span className="ml-2 shrink-0 inline-flex items-center rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                    <AlertCircle className="mr-1 h-3 w-3" /> Hoy
                   </span>
                 ) : (
-                  <span className="ml-2 shrink-0 inline-flex items-center rounded-md bg-blue-100/80 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
-                    <Clock className="mr-0.5 h-2.5 w-2.5" /> {item.daysUntilDue}d
+                  <span className="ml-2 shrink-0 inline-flex items-center rounded-lg bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                    <Clock className="mr-1 h-3 w-3" /> {item.daysUntilDue}d
                   </span>
                 )}
               </div>
-              <p className="mt-1.5 text-base font-semibold tabular-nums font-mono">
+              <p className="mt-2 text-lg font-bold tabular-nums font-mono">
                 {formatCurrency(item.amount)}
               </p>
               <CategoryBadge
                 category={item.recurringEvent.category}
-                className="mt-1.5 text-[10px] py-0 px-1.5"
+                className="mt-2"
               />
             </div>
           ))}
