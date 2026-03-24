@@ -22,7 +22,7 @@ export const CATEGORIES: Record<
     bgLight: "bg-amber-50/80 text-amber-800 border border-amber-200/60",
   },
   "alimentacion-salud": {
-    label: "Salud",
+    label: "Alimentación & Salud",
     icon: "HeartPulse",
     color: "bg-emerald-600",
     bgLight: "bg-emerald-50/80 text-emerald-800 border border-emerald-200/60",
