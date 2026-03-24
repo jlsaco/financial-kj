@@ -1,0 +1,125 @@
+{
+  "id": "qoOUixhiYRupLISH",
+  "name": "FinanceKJ - Email Expense Registration",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "nodes": [
+    {
+      "id": "node-gmail-trigger",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [0, 0],
+      "parameters": {
+        "event": "messageReceived",
+        "simple": false,
+        "filters": {
+          "readStatus": "unread"
+        }
+      }
+    },
+    {
+      "id": "node-ai-agent",
+      "name": "Extract Expense Data",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [300, 0],
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze this forwarded email and extract expense information.\n\nFrom: {{ $json.from.text }}\nSubject: {{ $json.subject }}\nBody: {{ $json.text }}\nEmail date: {{ $json.date }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a financial transaction extractor for a Colombian personal finance app called FinanceKJ. Your job is to analyze emails and extract ALL expense/payment transactions.\n\n## IMPORTANT CONTEXT: FORWARDED EMAILS\nAll emails you receive are FORWARDED from personal email accounts to a centralized inbox. This means:\n- The \"From\" field is the person who forwarded the email, NOT the original sender.\n- The ORIGINAL sender (the company/service that charged the user) appears in the email body or subject line (usually after \"Fwd:\" or in the \"---------- Forwarded message ---------\" section).\n- Look for the original sender in: subject line, forwarded message headers in the body, or the email content itself.\n\n## YOUR TASK\n1. Analyze the email and find ALL expense/payment transactions it contains.\n2. A single email may contain MULTIPLE transactions (e.g., several purchases on the same day). Extract each one separately.\n3. If the email does NOT contain any transactions (e.g., newsletters, promotions, OTP codes, marketing), return an empty array.\n\n## RESPONSE FORMAT\nReturn a JSON object with an \"expenses\" array. Each item in the array is one transaction:\n- If there are transactions: { \"expenses\": [ { ... }, { ... } ] }\n- If there are NO transactions: { \"expenses\": [] }\n\n## FIELDS FOR EACH EXPENSE\n\n### name (string)\n- A short, descriptive name for the expense in Spanish.\n- Max 50 characters.\n- Include the merchant/service name when available.\n- Examples: \"RappiCard Panaderia Suprema\", \"Uber viaje Chapinero-Suba\", \"Pago Netflix mensual\"\n\n### amount (number)\n- The transaction amount in Colombian Pesos (COP).\n- Always a positive number. Never negative.\n- No decimals for round COP amounts.\n- IMPORTANT: In Colombian format, dots are thousands separators and commas are decimal separators. \"$15.200\" means fifteen thousand two hundred pesos, NOT fifteen point two.\n- Parse: \"$16.100\" = 16100, \"$70.000\" = 70000, \"COP 15.200,00\" = 15200\n\n### date (string, YYYY-MM-DD)\n- The date the transaction occurred, in ISO format.\n- Extract from the email body if available (e.g., \"Fecha de la transaccion\", transaction timestamp).\n- If no specific transaction date is found, use the email date provided.\n\n### category (string, exactly one of the following)\n- \"movilidad\" - transportation: Uber, taxi, DiDi, bus, toll, parking, gas station\n- \"alimentacion-salud\" - food, groceries, restaurants, health, pharmacy, medical, Rappi food orders, RappiCard purchases at restaurants/supermarkets\n- \"hogar-entretenimiento\" - home, entertainment, Netflix, Spotify, YouTube Premium, furniture, appliances, clothing, shopping\n- \"deuda\" - debt payments, credit card payments, loan installments\n- \"servicios\" - utilities, phone, internet, water, electricity, gas (home), Claro, Movistar, ETB, EPM\n\n### CATEGORIZATION HINTS\n- RappiCard, Rappi -> usually \"alimentacion-salud\" (unless clearly non-food)\n- Uber, DiDi, InDriver -> usually \"movilidad\"\n- Netflix, Spotify, YouTube, Disney+, HBO -> usually \"hogar-entretenimiento\"\n- Claro, Movistar, Tigo, ETB, EPM, Vanti -> usually \"servicios\"\n- Nequi, Davivienda, Bancolombia (loan/credit payments) -> usually \"deuda\"\n\nUse your best judgment based on the full email content.",
+          "maxIterations": 3
+        }
+      }
+    },
+    {
+      "id": "node-anthropic-model",
+      "name": "Anthropic Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [300, 220],
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-3-5-haiku-20241022",
+          "cachedResultName": "Claude 3.5 Haiku"
+        },
+        "options": {
+          "temperature": 0.1
+        }
+      }
+    },
+    {
+      "id": "node-output-parser",
+      "name": "Expense Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [480, 220],
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": "{\n  \"expenses\": [\n    { \"name\": \"RappiCard Panaderia Suprema\", \"amount\": 16100, \"date\": \"2026-03-02\", \"category\": \"alimentacion-salud\" }\n  ]\n}",
+        "autoFix": false
+      }
+    },
+    {
+      "id": "node-filter-expense",
+      "name": "Filter Expenses",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [560, 0],
+      "parameters": {
+        "language": "javaScript",
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst expenses = [];\nfor (const item of items) {\n  const data = item.json.output || item.json;\n  const expenseList = data.expenses || [];\n  for (const expense of expenseList) {\n    expenses.push({ json: { name: expense.name, amount: expense.amount, date: expense.date, category: expense.category } });\n  }\n}\nreturn expenses;"
+      }
+    },
+    {
+      "id": "node-supabase-insert",
+      "name": "Insert Expense",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [820, 0],
+      "parameters": {
+        "resource": "row",
+        "operation": "create",
+        "tableId": "finance_records",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "name", "fieldValue": "={{ $json.name }}" },
+            { "fieldId": "amount", "fieldValue": "={{ $json.amount }}" },
+            { "fieldId": "type", "fieldValue": "gasto" },
+            { "fieldId": "category", "fieldValue": "={{ $json.category }}" },
+            { "fieldId": "user_id", "fieldValue": "bot-correos" },
+            { "fieldId": "date", "fieldValue": "={{ $json.date }}" }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [[{ "node": "Extract Expense Data", "type": "main", "index": 0 }]]
+    },
+    "Extract Expense Data": {
+      "main": [[{ "node": "Filter Expenses", "type": "main", "index": 0 }]]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [[{ "node": "Extract Expense Data", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Expense Output Parser": {
+      "ai_outputParser": [[{ "node": "Extract Expense Data", "type": "ai_outputParser", "index": 0 }]]
+    },
+    "Filter Expenses": {
+      "main": [[{ "node": "Insert Expense", "type": "main", "index": 0 }]]
+    }
+  }
+}
