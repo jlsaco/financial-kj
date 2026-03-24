@@ -35,7 +35,8 @@ export function RecurringFormDrawer({
   onOpenChange,
   editEvent,
 }: RecurringFormDrawerProps) {
-  const { dispatch } = useFinance();
+  const { addRecurringEvent, updateRecurringEvent } = useFinance();
+  const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
   const [defaultAmount, setDefaultAmount] = useState("");
@@ -59,7 +60,7 @@ export function RecurringFormDrawer({
     }
   }, [editEvent, open]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const parsedAmount = parseFloat(defaultAmount);
     const parsedDay = parseInt(dayOfMonth);
     if (
@@ -74,37 +75,34 @@ export function RecurringFormDrawer({
       return;
     }
 
-    if (editEvent) {
-      dispatch({
-        type: "UPDATE_RECURRING",
-        payload: {
-          id: editEvent.id,
-          updates: {
-            name: name.trim(),
-            defaultAmount: parsedAmount,
-            dayOfMonth: parsedDay,
-            category,
-            userId,
-          },
-        },
-      });
-      toast.success("Evento actualizado");
-    } else {
-      const event: RecurringEvent = {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        defaultAmount: parsedAmount,
-        dayOfMonth: parsedDay,
-        category,
-        userId,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-      };
-      dispatch({ type: "ADD_RECURRING", payload: event });
-      toast.success("Evento recurrente creado");
+    setSaving(true);
+    try {
+      if (editEvent) {
+        await updateRecurringEvent(editEvent.id, {
+          name: name.trim(),
+          defaultAmount: parsedAmount,
+          dayOfMonth: parsedDay,
+          category,
+          userId,
+        });
+        toast.success("Evento actualizado");
+      } else {
+        await addRecurringEvent({
+          name: name.trim(),
+          defaultAmount: parsedAmount,
+          dayOfMonth: parsedDay,
+          category,
+          userId,
+          isActive: true,
+        });
+        toast.success("Evento recurrente creado");
+      }
+      onOpenChange(false);
+    } catch {
+      toast.error("Error al guardar");
+    } finally {
+      setSaving(false);
     }
-
-    onOpenChange(false);
   };
 
   return (

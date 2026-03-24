@@ -27,7 +27,7 @@ export function BudgetEditDrawer({
   onOpenChange,
   category,
 }: BudgetEditDrawerProps) {
-  const { state, dispatch } = useFinance();
+  const { state, updateBudget } = useFinance();
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function BudgetEditDrawer({
     }
   }, [category, state.budgets]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!category) return;
     const parsed = parseFloat(amount);
     if (isNaN(parsed) || parsed < 0) {
@@ -45,14 +45,17 @@ export function BudgetEditDrawer({
       return;
     }
 
-    const updated: CategoryBudget = {
-      category,
-      monthlyBudget: parsed,
-      updatedAt: new Date().toISOString(),
-    };
-    dispatch({ type: "UPDATE_BUDGET", payload: updated });
-    toast.success("Presupuesto actualizado");
-    onOpenChange(false);
+    try {
+      await updateBudget({
+        category,
+        monthlyBudget: parsed,
+        updatedAt: new Date().toISOString(),
+      });
+      toast.success("Presupuesto actualizado");
+      onOpenChange(false);
+    } catch {
+      toast.error("Error al guardar");
+    }
   };
 
   if (!category) return null;

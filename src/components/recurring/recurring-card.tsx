@@ -14,15 +14,16 @@ interface RecurringCardProps {
 }
 
 export function RecurringCard({ event }: RecurringCardProps) {
-  const { dispatch } = useFinance();
+  const { updateRecurringEvent } = useFinance();
 
-  const toggleActive = (e: React.MouseEvent) => {
+  const toggleActive = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    dispatch({
-      type: "UPDATE_RECURRING",
-      payload: { id: event.id, updates: { isActive: !event.isActive } },
-    });
+    try {
+      await updateRecurringEvent(event.id, { isActive: !event.isActive });
+    } catch {
+      // silently fail — toast handled by context if needed
+    }
   };
 
   return (

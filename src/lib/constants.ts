@@ -1,4 +1,4 @@
-import { Category, CategoryBudget, User, UserId } from "@/types";
+import { Category, User, UserId } from "@/types";
 
 export const USERS: Record<UserId, User> = {
   jose: { id: "jose", name: "Jose", avatar: "J", color: "bg-emerald-600" },
@@ -55,41 +55,6 @@ export const RECORD_TYPE_CONFIG = {
     bgColor: "bg-green-50",
   },
 };
-
-export const STORAGE_KEYS = {
-  RECORDS: "financekj_records",
-  RECURRING_EVENTS: "financekj_recurring_events",
-  MONTH_CONFIGS: "financekj_month_payment_configs",
-  BUDGETS: "financekj_budgets",
-} as const;
-
-export const DEFAULT_BUDGETS: CategoryBudget[] = [
-  {
-    category: "movilidad",
-    monthlyBudget: 300000,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    category: "alimentacion-salud",
-    monthlyBudget: 800000,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    category: "hogar-entretenimiento",
-    monthlyBudget: 500000,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    category: "deuda",
-    monthlyBudget: 1000000,
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    category: "servicios",
-    monthlyBudget: 400000,
-    updatedAt: new Date().toISOString(),
-  },
-];
 
 export const ALL_CATEGORIES: Category[] = [
   "movilidad",

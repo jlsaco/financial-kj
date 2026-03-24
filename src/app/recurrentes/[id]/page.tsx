@@ -17,7 +17,7 @@ import { toast } from "sonner";
 export default function RecurringDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { state, dispatch } = useFinance();
+  const { state, deleteRecurringEvent } = useFinance();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -42,10 +42,14 @@ export default function RecurringDetailPage() {
     );
   }
 
-  const handleDelete = () => {
-    dispatch({ type: "DELETE_RECURRING", payload: event.id });
-    toast.success("Evento eliminado");
-    router.push("/recurrentes");
+  const handleDelete = async () => {
+    try {
+      await deleteRecurringEvent(event.id);
+      toast.success("Evento eliminado");
+      router.push("/recurrentes");
+    } catch {
+      toast.error("Error al eliminar");
+    }
   };
 
   return (

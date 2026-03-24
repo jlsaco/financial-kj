@@ -21,6 +21,7 @@ import * as recurringStore from "@/store/recurring-store";
 import * as budgetsStore from "@/store/budgets-store";
 import { getUpcomingRecurringEvents } from "@/lib/date-helpers";
 import { CATEGORIES } from "@/lib/constants";
+import { toast } from "sonner";
 
 interface FinanceState {
   records: FinanceRecord[];
@@ -33,16 +34,10 @@ interface FinanceState {
 type FinanceAction =
   | { type: "INIT"; payload: Omit<FinanceState, "isLoaded"> }
   | { type: "ADD_RECORD"; payload: FinanceRecord }
-  | {
-      type: "UPDATE_RECORD";
-      payload: { id: string; updates: Partial<FinanceRecord> };
-    }
+  | { type: "UPDATE_RECORD"; payload: FinanceRecord }
   | { type: "DELETE_RECORD"; payload: string }
   | { type: "ADD_RECURRING"; payload: RecurringEvent }
-  | {
-      type: "UPDATE_RECURRING";
-      payload: { id: string; updates: Partial<RecurringEvent> };
-    }
+  | { type: "UPDATE_RECURRING"; payload: RecurringEvent }
   | { type: "DELETE_RECURRING"; payload: string }
   | { type: "SET_MONTH_CONFIG"; payload: MonthPaymentConfig }
   | { type: "UPDATE_BUDGET"; payload: CategoryBudget };
@@ -70,9 +65,7 @@ function financeReducer(
       return {
         ...state,
         records: state.records.map((r) =>
-          r.id === action.payload.id
-            ? { ...r, ...action.payload.updates, updatedAt: new Date().toISOString() }
-            : r
+          r.id === action.payload.id ? action.payload : r
         ),
       };
 
@@ -92,9 +85,7 @@ function financeReducer(
       return {
         ...state,
         recurringEvents: state.recurringEvents.map((e) =>
-          e.id === action.payload.id
-            ? { ...e, ...action.payload.updates }
-            : e
+          e.id === action.payload.id ? action.payload : e
         ),
       };
 
@@ -140,7 +131,14 @@ function financeReducer(
 
 interface FinanceContextValue {
   state: FinanceState;
-  dispatch: React.Dispatch<FinanceAction>;
+  addRecord: (data: Omit<FinanceRecord, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  updateRecord: (id: string, updates: Partial<FinanceRecord>) => Promise<void>;
+  deleteRecord: (id: string) => Promise<void>;
+  addRecurringEvent: (data: Omit<RecurringEvent, "id" | "createdAt">) => Promise<void>;
+  updateRecurringEvent: (id: string, updates: Partial<RecurringEvent>) => Promise<void>;
+  deleteRecurringEvent: (id: string) => Promise<void>;
+  setMonthConfig: (config: Omit<MonthPaymentConfig, "id">) => Promise<void>;
+  updateBudget: (budget: CategoryBudget) => Promise<void>;
   getMonthSummary: (
     month: number,
     year: number
@@ -159,36 +157,76 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(financeReducer, initialState);
 
   useEffect(() => {
-    dispatch({
-      type: "INIT",
-      payload: {
-        records: recordsStore.getRecords(),
-        recurringEvents: recurringStore.getRecurringEvents(),
-        monthConfigs: recurringStore.getMonthConfigs(),
-        budgets: budgetsStore.getBudgets(),
-      },
-    });
+    async function load() {
+      const [records, recurringEvents, monthConfigs, budgets] =
+        await Promise.all([
+          recordsStore.fetchRecords(),
+          recurringStore.fetchRecurringEvents(),
+          recurringStore.fetchMonthConfigs(),
+          budgetsStore.fetchBudgets(),
+        ]);
+      dispatch({
+        type: "INIT",
+        payload: { records, recurringEvents, monthConfigs, budgets },
+      });
+    }
+    load().catch(() => toast.error("Error cargando datos"));
   }, []);
 
-  useEffect(() => {
-    if (!state.isLoaded) return;
-    recordsStore.saveRecords(state.records);
-  }, [state.records, state.isLoaded]);
+  const addRecord = useCallback(
+    async (data: Omit<FinanceRecord, "id" | "createdAt" | "updatedAt">) => {
+      const saved = await recordsStore.insertRecord(data);
+      dispatch({ type: "ADD_RECORD", payload: saved });
+    },
+    []
+  );
 
-  useEffect(() => {
-    if (!state.isLoaded) return;
-    recurringStore.saveRecurringEvents(state.recurringEvents);
-  }, [state.recurringEvents, state.isLoaded]);
+  const updateRecord = useCallback(
+    async (id: string, updates: Partial<FinanceRecord>) => {
+      const saved = await recordsStore.updateRecord(id, updates);
+      dispatch({ type: "UPDATE_RECORD", payload: saved });
+    },
+    []
+  );
 
-  useEffect(() => {
-    if (!state.isLoaded) return;
-    recurringStore.saveMonthConfigs(state.monthConfigs);
-  }, [state.monthConfigs, state.isLoaded]);
+  const deleteRecord = useCallback(async (id: string) => {
+    await recordsStore.deleteRecord(id);
+    dispatch({ type: "DELETE_RECORD", payload: id });
+  }, []);
 
-  useEffect(() => {
-    if (!state.isLoaded) return;
-    budgetsStore.saveBudgets(state.budgets);
-  }, [state.budgets, state.isLoaded]);
+  const addRecurringEvent = useCallback(
+    async (data: Omit<RecurringEvent, "id" | "createdAt">) => {
+      const saved = await recurringStore.insertRecurringEvent(data);
+      dispatch({ type: "ADD_RECURRING", payload: saved });
+    },
+    []
+  );
+
+  const updateRecurringEvent = useCallback(
+    async (id: string, updates: Partial<RecurringEvent>) => {
+      const saved = await recurringStore.updateRecurringEvent(id, updates);
+      dispatch({ type: "UPDATE_RECURRING", payload: saved });
+    },
+    []
+  );
+
+  const deleteRecurringEvent = useCallback(async (id: string) => {
+    await recurringStore.deleteRecurringEvent(id);
+    dispatch({ type: "DELETE_RECURRING", payload: id });
+  }, []);
+
+  const setMonthConfig = useCallback(
+    async (config: Omit<MonthPaymentConfig, "id">) => {
+      const saved = await recurringStore.upsertMonthConfig(config);
+      dispatch({ type: "SET_MONTH_CONFIG", payload: saved });
+    },
+    []
+  );
+
+  const updateBudget = useCallback(async (budget: CategoryBudget) => {
+    const saved = await budgetsStore.updateBudget(budget);
+    dispatch({ type: "UPDATE_BUDGET", payload: saved });
+  }, []);
 
   const getMonthSummary = useCallback(
     (month: number, year: number) => {
@@ -228,7 +266,19 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   return (
     <FinanceContext.Provider
-      value={{ state, dispatch, getMonthSummary, getUpcomingEvents }}
+      value={{
+        state,
+        addRecord,
+        updateRecord,
+        deleteRecord,
+        addRecurringEvent,
+        updateRecurringEvent,
+        deleteRecurringEvent,
+        setMonthConfig,
+        updateBudget,
+        getMonthSummary,
+        getUpcomingEvents,
+      }}
     >
       {children}
     </FinanceContext.Provider>

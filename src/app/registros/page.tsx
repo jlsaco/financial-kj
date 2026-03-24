@@ -14,7 +14,7 @@ import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
 export default function RegistrosPage() {
-  const { state, dispatch } = useFinance();
+  const { state, deleteRecord: deleteRecordAction } = useFinance();
   const { selectedMonth, selectedYear } = useUI();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<FinanceRecord | null>(null);
@@ -42,10 +42,14 @@ export default function RegistrosPage() {
     setDeleteRecord(record);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deleteRecord) {
-      dispatch({ type: "DELETE_RECORD", payload: deleteRecord.id });
-      toast.success("Registro eliminado");
+      try {
+        await deleteRecordAction(deleteRecord.id);
+        toast.success("Registro eliminado");
+      } catch {
+        toast.error("Error al eliminar");
+      }
       setDeleteRecord(null);
     }
   };

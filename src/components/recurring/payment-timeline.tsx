@@ -17,7 +17,7 @@ interface PaymentTimelineProps {
 }
 
 export function PaymentTimeline({ event }: PaymentTimelineProps) {
-  const { state, dispatch } = useFinance();
+  const { state, setMonthConfig } = useFinance();
   const [editingMonth, setEditingMonth] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
 
@@ -75,7 +75,7 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
     setEditAmount(currentAmount.toString());
   };
 
-  const saveAmount = (month: number, year: number) => {
+  const saveAmount = async (month: number, year: number) => {
     const parsed = parseFloat(editAmount);
     if (isNaN(parsed) || parsed < 0) {
       toast.error("Monto inválido");
@@ -83,36 +83,41 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
     }
 
     const existing = getConfig(month, year);
-    const config: MonthPaymentConfig = {
-      id: existing?.id ?? crypto.randomUUID(),
-      recurringEventId: event.id,
-      month,
-      year,
-      amount: parsed,
-      isPaid: existing?.isPaid ?? false,
-      paidDate: existing?.paidDate,
-      recordId: existing?.recordId,
-      note: existing?.note,
-    };
-    dispatch({ type: "SET_MONTH_CONFIG", payload: config });
-    setEditingMonth(null);
-    toast.success("Monto actualizado");
+    try {
+      await setMonthConfig({
+        recurringEventId: event.id,
+        month,
+        year,
+        amount: parsed,
+        isPaid: existing?.isPaid ?? false,
+        paidDate: existing?.paidDate,
+        recordId: existing?.recordId,
+        note: existing?.note,
+      });
+      setEditingMonth(null);
+      toast.success("Monto actualizado");
+    } catch {
+      toast.error("Error al guardar");
+    }
   };
 
-  const togglePaid = (month: number, year: number) => {
+  const togglePaid = async (month: number, year: number) => {
     const existing = getConfig(month, year);
-    const config: MonthPaymentConfig = {
-      id: existing?.id ?? crypto.randomUUID(),
-      recurringEventId: event.id,
-      month,
-      year,
-      amount: existing?.amount ?? event.defaultAmount,
-      isPaid: !existing?.isPaid,
-      paidDate: !existing?.isPaid ? new Date().toISOString() : undefined,
-      note: existing?.note,
-    };
-    dispatch({ type: "SET_MONTH_CONFIG", payload: config });
-    toast.success(config.isPaid ? "Marcado como pagado" : "Marcado como pendiente");
+    const newIsPaid = !existing?.isPaid;
+    try {
+      await setMonthConfig({
+        recurringEventId: event.id,
+        month,
+        year,
+        amount: existing?.amount ?? event.defaultAmount,
+        isPaid: newIsPaid,
+        paidDate: newIsPaid ? new Date().toISOString() : undefined,
+        note: existing?.note,
+      });
+      toast.success(newIsPaid ? "Marcado como pagado" : "Marcado como pendiente");
+    } catch {
+      toast.error("Error al guardar");
+    }
   };
 
   return (

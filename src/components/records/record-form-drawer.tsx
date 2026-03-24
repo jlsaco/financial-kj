@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { UserSelector } from "@/components/shared/user-selector";
 import { useFinance } from "@/contexts/finance-context";
-import { Category, FinanceRecord, RecordType, UserId } from "@/types";
+import { Category, RecordType, UserId, FinanceRecord } from "@/types";
 import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
@@ -35,7 +35,8 @@ export function RecordFormDrawer({
   onOpenChange,
   editRecord,
 }: RecordFormDrawerProps) {
-  const { dispatch } = useFinance();
+  const { addRecord, updateRecord } = useFinance();
+  const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -62,46 +63,42 @@ export function RecordFormDrawer({
     }
   }, [editRecord, open]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount);
     if (!name.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
       toast.error("Completa todos los campos correctamente");
       return;
     }
 
-    if (editRecord) {
-      dispatch({
-        type: "UPDATE_RECORD",
-        payload: {
-          id: editRecord.id,
-          updates: {
-            name: name.trim(),
-            amount: parsedAmount,
-            type,
-            category,
-            userId,
-            date,
-          },
-        },
-      });
-      toast.success("Registro actualizado");
-    } else {
-      const record: FinanceRecord = {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        amount: parsedAmount,
-        type,
-        category,
-        userId,
-        date,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      dispatch({ type: "ADD_RECORD", payload: record });
-      toast.success("Registro creado");
+    setSaving(true);
+    try {
+      if (editRecord) {
+        await updateRecord(editRecord.id, {
+          name: name.trim(),
+          amount: parsedAmount,
+          type,
+          category,
+          userId,
+          date,
+        });
+        toast.success("Registro actualizado");
+      } else {
+        await addRecord({
+          name: name.trim(),
+          amount: parsedAmount,
+          type,
+          category,
+          userId,
+          date,
+        });
+        toast.success("Registro creado");
+      }
+      onOpenChange(false);
+    } catch {
+      toast.error("Error al guardar");
+    } finally {
+      setSaving(false);
     }
-
-    onOpenChange(false);
   };
 
   return (
