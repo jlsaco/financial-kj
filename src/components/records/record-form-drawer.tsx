@@ -156,7 +156,7 @@ export function RecordFormDrawer({
 
             {/* Amount */}
             <div className="space-y-1.5">
-              <Label htmlFor="amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Valor</Label>
+              <Label htmlFor="amount" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Valor</Label>
               <Input
                 id="amount"
                 type="number"
@@ -170,7 +170,7 @@ export function RecordFormDrawer({
 
             {/* Name */}
             <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
+              <Label htmlFor="name" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
               <Input
                 id="name"
                 placeholder="Descripcion del registro"
@@ -181,7 +181,7 @@ export function RecordFormDrawer({
 
             {/* Category */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
               <div className="grid grid-cols-2 gap-2">
                 {ALL_CATEGORIES.map((cat) => {
                   const config = CATEGORIES[cat];
@@ -207,7 +207,7 @@ export function RecordFormDrawer({
 
             {/* Date */}
             <div className="space-y-1.5">
-              <Label htmlFor="date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha</Label>
+              <Label htmlFor="date" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Fecha</Label>
               <Input
                 id="date"
                 type="date"
@@ -218,7 +218,7 @@ export function RecordFormDrawer({
 
             {/* User */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>
               <UserSelector value={userId} onChange={setUserId} />
             </div>
           </div>

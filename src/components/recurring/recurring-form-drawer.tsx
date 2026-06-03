@@ -201,7 +201,7 @@ export function RecurringFormDrawer({
 
           <div className="space-y-5 px-4">
             <div className="space-y-1.5">
-              <Label htmlFor="event-name" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
+              <Label htmlFor="event-name" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
               <Input
                 id="event-name"
                 placeholder="Ej: Netflix, Renta, Tarjeta"
@@ -212,7 +212,7 @@ export function RecurringFormDrawer({
 
             {!isDebt && (
               <div className="space-y-1.5">
-                <Label htmlFor="event-amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Monto por defecto</Label>
+                <Label htmlFor="event-amount" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Monto por defecto</Label>
                 <Input
                   id="event-amount"
                   type="number"
@@ -226,7 +226,7 @@ export function RecurringFormDrawer({
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="event-day" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Dia del mes</Label>
+              <Label htmlFor="event-day" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Dia del mes</Label>
               <Input
                 id="event-day"
                 type="number"
@@ -239,7 +239,7 @@ export function RecurringFormDrawer({
 
             <div className={isDebt ? "space-y-1.5" : "grid grid-cols-2 gap-3"}>
               <div className="space-y-1.5">
-                <Label htmlFor="event-start-date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha de inicio</Label>
+                <Label htmlFor="event-start-date" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Fecha de inicio</Label>
                 <Input
                   id="event-start-date"
                   type="date"
@@ -249,7 +249,7 @@ export function RecurringFormDrawer({
               </div>
               {!isDebt && (
                 <div className="space-y-1.5">
-                  <Label htmlFor="event-end-date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha de fin</Label>
+                  <Label htmlFor="event-end-date" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Fecha de fin</Label>
                   <Input
                     id="event-end-date"
                     type="date"
@@ -261,7 +261,7 @@ export function RecurringFormDrawer({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
               <div className="grid grid-cols-2 gap-2">
                 {ALL_CATEGORIES.map((cat) => {
                   const config = CATEGORIES[cat];
@@ -293,7 +293,7 @@ export function RecurringFormDrawer({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="debt-total" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Total a pagar</Label>
+                    <Label htmlFor="debt-total" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Total a pagar</Label>
                     <Input
                       id="debt-total"
                       type="number"
@@ -305,7 +305,7 @@ export function RecurringFormDrawer({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="debt-installments" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nº de cuotas</Label>
+                    <Label htmlFor="debt-installments" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Nº de cuotas</Label>
                     <Input
                       id="debt-installments"
                       type="number"
@@ -321,7 +321,7 @@ export function RecurringFormDrawer({
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="debt-principal" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Capital prestado</Label>
+                    <Label htmlFor="debt-principal" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Capital prestado</Label>
                     <Input
                       id="debt-principal"
                       type="number"
@@ -333,7 +333,7 @@ export function RecurringFormDrawer({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="debt-rate" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">% de interés</Label>
+                    <Label htmlFor="debt-rate" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">% de interés</Label>
                     <Input
                       id="debt-rate"
                       type="number"
@@ -358,7 +358,7 @@ export function RecurringFormDrawer({
             )}
 
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Responsable</Label>
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Responsable</Label>
               <UserSelector value={userId} onChange={setUserId} />
             </div>
           </div>
