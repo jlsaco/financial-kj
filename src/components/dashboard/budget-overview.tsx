@@ -29,16 +29,16 @@ export function BudgetOverview() {
 
         return (
           <div key={budget.category} className="flex items-center gap-3">
-            <div className="w-20 text-sm font-medium text-foreground/70 truncate">
+            <div className="w-32 shrink-0 text-sm font-medium leading-tight text-foreground/70">
               {config?.label}
             </div>
-            <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/80">
+            <div className="relative h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted/80">
               <div
                 className={`absolute left-0 top-0 h-full rounded-full transition-all duration-500 ease-out ${barColor}`}
                 style={{ width: `${Math.min(pct, 100)}%` }}
               />
             </div>
-            <div className="w-20 text-right font-mono text-xs font-medium text-foreground/50">
+            <div className="w-16 shrink-0 text-right font-mono text-xs font-medium text-foreground/50">
               {formatCurrency(spent)}
             </div>
           </div>
