@@ -170,11 +170,12 @@ export function MarkPaidDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-lg">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col overflow-hidden">
           <DrawerHeader>
             <DrawerTitle>Marcar como pagado</DrawerTitle>
           </DrawerHeader>
 
+          <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="px-4">
             {/* Selector de modo */}
             <div className="flex gap-2">
@@ -313,6 +314,7 @@ export function MarkPaidDrawer({
               </div>
             </div>
           )}
+          </div>
 
           <DrawerFooter>
             {mode === "create" && (
