@@ -39,7 +39,7 @@ export function RecordFormDrawer({
   onOpenChange,
   editRecord,
 }: RecordFormDrawerProps) {
-  const { addRecord, updateRecord, deleteRecord } = useFinance();
+  const { addRecord, updateRecord, deleteRecord, state } = useFinance();
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -49,6 +49,9 @@ export function RecordFormDrawer({
   const [category, setCategory] = useState<Category>("alimentacion-salud");
   const [userId, setUserId] = useState<UserId>("jose");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [tarjetaId, setTarjetaId] = useState<string | undefined>(undefined);
+
+  const tarjetas = state.tarjetas.filter((t) => t.isActive);
 
   useEffect(() => {
     if (editRecord) {
@@ -58,6 +61,7 @@ export function RecordFormDrawer({
       setCategory(editRecord.category);
       setUserId(editRecord.userId);
       setDate(editRecord.date);
+      setTarjetaId(editRecord.tarjetaId);
     } else {
       setName("");
       setAmount("");
@@ -65,6 +69,7 @@ export function RecordFormDrawer({
       setCategory("alimentacion-salud");
       setUserId("jose");
       setDate(new Date().toISOString().split("T")[0]);
+      setTarjetaId(undefined);
     }
   }, [editRecord, open]);
 
@@ -77,6 +82,8 @@ export function RecordFormDrawer({
 
     setSaving(true);
     try {
+      // La tarjeta (medio de pago) solo aplica a gastos.
+      const effTarjetaId = type === "gasto" ? tarjetaId : undefined;
       if (editRecord) {
         await updateRecord(editRecord.id, {
           name: name.trim(),
@@ -85,6 +92,7 @@ export function RecordFormDrawer({
           category,
           userId,
           date,
+          tarjetaId: effTarjetaId,
         });
         toast.success("Registro actualizado");
       } else {
@@ -95,6 +103,7 @@ export function RecordFormDrawer({
           category,
           userId,
           date,
+          tarjetaId: effTarjetaId,
         });
         toast.success("Registro creado");
       }
@@ -215,6 +224,50 @@ export function RecordFormDrawer({
                 onChange={(e) => setDate(e.target.value)}
               />
             </div>
+
+            {/* Tarjeta (medio de pago) — solo para gastos */}
+            {type === "gasto" && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                  Pagado con
+                </Label>
+                {tarjetas.length === 0 ? (
+                  <p className="text-[13px] text-muted-foreground/70">
+                    Sin tarjetas. Créalas en la pestaña Tarjetas para agruparlas
+                    en la liquidación mensual.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setTarjetaId(undefined)}
+                      className={`rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                        tarjetaId === undefined
+                          ? "bg-foreground text-background shadow-sm"
+                          : "border border-border/60 text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      Débito / efectivo
+                    </button>
+                    {tarjetas.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setTarjetaId(t.id)}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                          tarjetaId === t.id
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "border border-border/60 text-muted-foreground hover:border-border"
+                        }`}
+                      >
+                        <CreditCard className="h-4 w-4" strokeWidth={1.5} />
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* User */}
             <div className="space-y-1.5">

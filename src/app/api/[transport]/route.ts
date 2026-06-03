@@ -36,7 +36,18 @@ const mcpHandler = createMcpHandler(
       "actualizar_recurrente para editar sus campos (recalcula end_date al cambiar inicio/" +
       "cuotas) y resumen_deuda para el saldo pendiente, progreso, próxima cuota y fin " +
       "estimado. Se pueden borrar definitivamente registros/deudas (borrar_registro) y " +
-      "eventos recurrentes (borrar_recurrente); el borrado es irreversible.",
+      "eventos recurrentes (borrar_recurrente); el borrado es irreversible. " +
+      "Tarjetas (medio de pago): muchos gastos se pagan con tarjetas de crédito " +
+      "dedicadas por rubro y se liquidan a inicio del mes siguiente. Gestiona las " +
+      "tarjetas con crear_tarjeta, listar_tarjetas, actualizar_tarjeta (isActive=false " +
+      "para archivar) y borrar_tarjeta. Al registrar un gasto puedes indicar la tarjeta " +
+      "con tarjetaId en crear_gasto (sin tarjeta = débito/efectivo); el gasto sigue " +
+      "contando en su rubro, la tarjeta solo agrupa para la liquidación. estado_tarjetas " +
+      "muestra, por periodo (mes/año), cuánto se gastó con cada tarjeta (owed) y si está " +
+      "liquidado o pendiente. liquidar_tarjeta_mes marca un periodo como pagado " +
+      "(pagado=true, importe por defecto = lo gastado) o pendiente (pagado=false). La " +
+      "liquidación NO es un gasto nuevo: solo registra que el periodo quedó saldado, " +
+      "evitando doble conteo.",
   },
   {
     basePath: "/api",

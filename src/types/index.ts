@@ -45,6 +45,8 @@ export interface FinanceRecord {
   createdAt: string;
   updatedAt: string;
   recurringEventId?: string;
+  /** Tarjeta (medio de pago) con la que se pagó. undefined = débito/efectivo. */
+  tarjetaId?: string;
 }
 
 export interface RecurringEvent {
@@ -81,6 +83,54 @@ export interface CategoryBudget {
   category: Category;
   monthlyBudget: number;
   updatedAt: string;
+}
+
+/** Tarjeta de crédito usada como medio de pago. */
+export interface Tarjeta {
+  id: string;
+  name: string;
+  /** Dueño de la tarjeta. */
+  owner: UserId;
+  /** Día de corte/pago del mes (1-31), opcional. */
+  closingDay?: number;
+  /** Rubros asociados (informativo): ej. ["alimentacion-salud"]. */
+  categories?: Category[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+/**
+ * Liquidación (pago) del estado de cuenta de una tarjeta para un periodo
+ * (mes/año). NO es un gasto: solo registra que ese periodo quedó pagado.
+ */
+export interface Liquidacion {
+  id: string;
+  tarjetaId: string;
+  month: number;
+  year: number;
+  amount: number;
+  isPaid: boolean;
+  paidDate?: string;
+  note?: string;
+  createdAt: string;
+}
+
+/**
+ * Estado de liquidación de una tarjeta en un mes (computado en la UI/MCP):
+ * cuánto se gastó con la tarjeta ese mes y si ya se liquidó.
+ */
+export interface TarjetaMonthStatus {
+  tarjeta: Tarjeta;
+  month: number;
+  year: number;
+  /** Suma de gastos pagados con esta tarjeta en el periodo. */
+  owed: number;
+  /** Nº de gastos del periodo. */
+  recordsCount: number;
+  /** Liquidación registrada para el periodo (si existe). */
+  liquidacion: Liquidacion | null;
+  /** true si hay liquidación con isPaid. */
+  isPaid: boolean;
 }
 
 export interface UpcomingEvent {
