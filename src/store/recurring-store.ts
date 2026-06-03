@@ -10,6 +10,7 @@ function toEvent(row: {
   is_active: boolean;
   user_id: string;
   created_at: string;
+  type: string;
   start_date: string | null;
   end_date: string | null;
   total_amount: number | null;
@@ -20,6 +21,7 @@ function toEvent(row: {
   return {
     id: row.id,
     name: row.name,
+    type: (row.type ?? "gasto") as RecurringEvent["type"],
     category: row.category as RecurringEvent["category"],
     dayOfMonth: row.day_of_month,
     defaultAmount: Number(row.default_amount),
@@ -77,6 +79,7 @@ export async function insertRecurringEvent(
     .from("recurring_events")
     .insert({
       name: event.name,
+      type: event.type,
       category: event.category,
       day_of_month: event.dayOfMonth,
       default_amount: event.defaultAmount,
@@ -101,6 +104,7 @@ export async function updateRecurringEvent(
 ): Promise<RecurringEvent> {
   const dbUpdates: Record<string, unknown> = {};
   if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.type !== undefined) dbUpdates.type = updates.type;
   if (updates.category !== undefined) dbUpdates.category = updates.category;
   if (updates.dayOfMonth !== undefined) dbUpdates.day_of_month = updates.dayOfMonth;
   if (updates.defaultAmount !== undefined) dbUpdates.default_amount = updates.defaultAmount;

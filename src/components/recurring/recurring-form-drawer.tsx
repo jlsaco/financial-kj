@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { useFinance } from "@/contexts/finance-context";
-import { Category, RecurringEvent, UserId } from "@/types";
+import { Category, RecordType, RecurringEvent, UserId } from "@/types";
 import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
 import { computeDebtEndDate } from "@/lib/debt-helpers";
 import { formatCurrency } from "@/lib/formatters";
@@ -43,6 +43,7 @@ export function RecurringFormDrawer({
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
+  const [type, setType] = useState<RecordType>("gasto");
   const [defaultAmount, setDefaultAmount] = useState("");
   const [dayOfMonth, setDayOfMonth] = useState("1");
   const [category, setCategory] = useState<Category>("servicios");
@@ -58,6 +59,7 @@ export function RecurringFormDrawer({
   useEffect(() => {
     if (editEvent) {
       setName(editEvent.name);
+      setType(editEvent.type ?? "gasto");
       setDefaultAmount(editEvent.defaultAmount.toString());
       setDayOfMonth(editEvent.dayOfMonth.toString());
       setCategory(editEvent.category);
@@ -70,6 +72,7 @@ export function RecurringFormDrawer({
       setInterestRate(editEvent.interestRate?.toString() ?? "");
     } else {
       setName("");
+      setType("gasto");
       setDefaultAmount("");
       setDayOfMonth("1");
       setCategory("servicios");
@@ -84,6 +87,12 @@ export function RecurringFormDrawer({
   }, [editEvent, open]);
 
   const isDebt = category === "deuda";
+
+  // Las deudas siempre son gasto: si se selecciona la categoría deuda,
+  // forzamos el tipo a 'gasto' y ocultamos el toggle.
+  useEffect(() => {
+    if (isDebt) setType("gasto");
+  }, [isDebt]);
 
   // Cuota mensual sugerida = total ÷ nº cuotas (para deudas).
   const parsedTotal = parseFloat(totalAmount);
@@ -154,6 +163,7 @@ export function RecurringFormDrawer({
       if (editEvent) {
         await updateRecurringEvent(editEvent.id, {
           name: name.trim(),
+          type: isDebt ? "gasto" : type,
           defaultAmount: parsedAmount,
           dayOfMonth: parsedDay,
           category,
@@ -166,6 +176,7 @@ export function RecurringFormDrawer({
       } else {
         await addRecurringEvent({
           name: name.trim(),
+          type: isDebt ? "gasto" : type,
           defaultAmount: parsedAmount,
           dayOfMonth: parsedDay,
           category,
@@ -209,6 +220,34 @@ export function RecurringFormDrawer({
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
+
+            {/* Tipo de recurrente: las deudas siempre son gasto, así que se oculta. */}
+            {!isDebt && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setType("gasto")}
+                  className={`flex-1 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
+                    type === "gasto"
+                      ? "bg-rose-500 text-white shadow-[0_2px_8px_rgba(244,63,94,0.3)]"
+                      : "border border-border/60 text-muted-foreground hover:border-rose-200 hover:text-rose-600"
+                  }`}
+                >
+                  Gasto
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType("ingreso")}
+                  className={`flex-1 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
+                    type === "ingreso"
+                      ? "bg-emerald-600 text-white shadow-[0_2px_8px_rgba(16,185,129,0.3)]"
+                      : "border border-border/60 text-muted-foreground hover:border-emerald-200 hover:text-emerald-600"
+                  }`}
+                >
+                  Ingreso
+                </button>
+              </div>
+            )}
 
             {!isDebt && (
               <div className="space-y-1.5">

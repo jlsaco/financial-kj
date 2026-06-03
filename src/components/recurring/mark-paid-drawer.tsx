@@ -71,8 +71,11 @@ export function MarkPaidDrawer({
   const [userId, setUserId] = useState<UserId>(event.userId);
   const [date, setDate] = useState(dueDateString(event, month, year));
 
-  // --- Camino (b): buscar gasto existente del mismo mes ---
+  // --- Camino (b): buscar registro existente del mismo mes ---
   const [search, setSearch] = useState("");
+
+  const isIncome = event.type === "ingreso";
+  const recordWord = isIncome ? "ingreso" : "gasto";
 
   useEffect(() => {
     if (open) {
@@ -110,11 +113,12 @@ export function MarkPaidDrawer({
     }
     setSaving(true);
     try {
-      // 1) Crear el gasto vinculado al recurrente.
+      // 1) Crear el registro vinculado al recurrente, heredando su tipo
+      //    (gasto o ingreso) para que los recurrentes de ingreso generen ingresos.
       const saved = await addRecord({
         name: name.trim(),
         amount: parsedAmount,
-        type: "gasto",
+        type: event.type,
         category,
         userId,
         date,
@@ -137,7 +141,11 @@ export function MarkPaidDrawer({
         await deleteRecord(saved.id);
         throw err;
       }
-      toast.success("Gasto creado y mes marcado como pagado");
+      toast.success(
+        isIncome
+          ? "Ingreso creado y mes marcado como pagado"
+          : "Gasto creado y mes marcado como pagado"
+      );
       onOpenChange(false);
     } catch {
       toast.error("Error al guardar");
@@ -158,7 +166,11 @@ export function MarkPaidDrawer({
         paidDate: recordDate,
         recordId,
       });
-      toast.success("Gasto vinculado y mes marcado como pagado");
+      toast.success(
+        isIncome
+          ? "Ingreso vinculado y mes marcado como pagado"
+          : "Gasto vinculado y mes marcado como pagado"
+      );
       onOpenChange(false);
     } catch {
       toast.error("Error al guardar");
@@ -190,7 +202,7 @@ export function MarkPaidDrawer({
                 )}
               >
                 <Plus className="h-4 w-4" strokeWidth={1.8} />
-                Crear gasto
+                Crear {recordWord}
               </button>
               <button
                 type="button"
@@ -278,7 +290,7 @@ export function MarkPaidDrawer({
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" strokeWidth={1.8} />
                 <Input
-                  placeholder="Buscar gasto del mes..."
+                  placeholder={`Buscar ${recordWord} del mes...`}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9"
@@ -288,7 +300,7 @@ export function MarkPaidDrawer({
               <div className="max-h-[45vh] space-y-2 overflow-y-auto pb-2">
                 {filteredRecords.length === 0 ? (
                   <p className="py-8 text-center text-[13px] text-muted-foreground/60">
-                    No hay gastos en este mes
+                    No hay {recordWord}s en este mes
                   </p>
                 ) : (
                   filteredRecords.map((r) => (
@@ -323,7 +335,7 @@ export function MarkPaidDrawer({
                 disabled={saving}
                 className="w-full h-11 rounded-xl font-semibold tracking-wide active:scale-[0.98] active:translate-y-[1px] transition-all"
               >
-                Crear gasto y marcar pagado
+                Crear {recordWord} y marcar pagado
               </Button>
             )}
             <Button

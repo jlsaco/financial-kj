@@ -50,6 +50,8 @@ export interface FinanceRecord {
 export interface RecurringEvent {
   id: string;
   name: string;
+  /** Tipo del recurrente. Las deudas (category === 'deuda') siempre son 'gasto'. */
+  type: RecordType;
   category: Category;
   dayOfMonth: number;
   defaultAmount: number;

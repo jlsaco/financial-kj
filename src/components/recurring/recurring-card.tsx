@@ -32,14 +32,30 @@ export function RecurringCard({ event }: RecurringCardProps) {
         <UserAvatar userId={event.userId} />
         <div className="flex-1 min-w-0">
           <p className="truncate text-sm font-semibold">{event.name}</p>
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             <CategoryBadge category={event.category} />
+            {event.category !== "deuda" && (
+              <span
+                className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  event.type === "ingreso"
+                    ? "bg-emerald-500/15 text-emerald-600"
+                    : "bg-rose-500/15 text-rose-600"
+                }`}
+              >
+                {event.type === "ingreso" ? "Ingreso" : "Gasto"}
+              </span>
+            )}
             <span className="text-xs text-foreground/40">
               Dia {event.dayOfMonth}
             </span>
           </div>
         </div>
-        <p className="text-sm font-bold tabular-nums font-mono">
+        <p
+          className={`shrink-0 text-sm font-bold tabular-nums font-mono ${
+            event.type === "ingreso" ? "text-emerald-600" : ""
+          }`}
+        >
+          {event.type === "ingreso" ? "+" : ""}
           {formatCurrency(event.defaultAmount)}
         </p>
         <div
