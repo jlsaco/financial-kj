@@ -51,7 +51,7 @@ export function MainMenu() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         aria-label="Abrir menú"
-        className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground/60 transition-all hover:bg-accent/50 hover:text-foreground active:scale-95"
+        className="flex h-11 w-11 items-center justify-center rounded-xl text-foreground/60 transition-all hover:bg-accent/50 hover:text-foreground active:scale-95"
       >
         <Menu className="h-5 w-5" strokeWidth={1.8} />
       </SheetTrigger>

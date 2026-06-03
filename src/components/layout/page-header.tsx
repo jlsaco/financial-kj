@@ -26,11 +26,11 @@ export function PageHeader({ title, showMonthNav, action }: PageHeaderProps) {
           </div>
         </div>
         {showMonthNav && (
-          <div className="mt-2 flex items-center justify-center gap-3">
+          <div className="mt-1 flex items-center justify-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-xl transition-transform active:scale-95"
+              className="h-11 w-11 rounded-xl transition-transform active:scale-95"
               onClick={prevMonth}
             >
               <ChevronLeft className="h-4 w-4" strokeWidth={2} />
@@ -41,7 +41,7 @@ export function PageHeader({ title, showMonthNav, action }: PageHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 rounded-xl transition-transform active:scale-95"
+              className="h-11 w-11 rounded-xl transition-transform active:scale-95"
               onClick={nextMonth}
             >
               <ChevronRight className="h-4 w-4" strokeWidth={2} />
