@@ -1,0 +1,23 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci --cache .npm --prefer-offline
+    build:
+      commands:
+        # Amplify expone las variables de entorno SOLO en el build, no en el
+        # runtime SSR. Las variables secretas del servidor (sin prefijo
+        # NEXT_PUBLIC_) se leen con process.env en runtime, así que las
+        # escribimos en .env.production para que Next.js las cargue al arrancar
+        # el servidor. `|| true` evita que el build falle si alguna no existe.
+        - env | grep -e '^GITHUB_TOKEN=' -e '^GITHUB_OWNER=' -e '^GITHUB_REPO=' >> .env.production || true
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - .next/cache/**/*
+      - .npm/**/*
