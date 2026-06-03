@@ -134,9 +134,11 @@ export type Database = {
           created_at: string
           day_of_month: number
           default_amount: number
+          end_date: string | null
           id: string
           is_active: boolean
           name: string
+          start_date: string | null
           user_id: Database["public"]["Enums"]["user_id"]
         }
         Insert: {
@@ -144,9 +146,11 @@ export type Database = {
           created_at?: string
           day_of_month: number
           default_amount: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name: string
+          start_date?: string | null
           user_id: Database["public"]["Enums"]["user_id"]
         }
         Update: {
@@ -154,9 +158,11 @@ export type Database = {
           created_at?: string
           day_of_month?: number
           default_amount?: number
+          end_date?: string | null
           id?: string
           is_active?: boolean
           name?: string
+          start_date?: string | null
           user_id?: Database["public"]["Enums"]["user_id"]
         }
         Relationships: []

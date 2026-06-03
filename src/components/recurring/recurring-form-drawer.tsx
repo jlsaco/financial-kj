@@ -45,6 +45,8 @@ export function RecurringFormDrawer({
   const [dayOfMonth, setDayOfMonth] = useState("1");
   const [category, setCategory] = useState<Category>("servicios");
   const [userId, setUserId] = useState<UserId>("jose");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (editEvent) {
@@ -53,12 +55,16 @@ export function RecurringFormDrawer({
       setDayOfMonth(editEvent.dayOfMonth.toString());
       setCategory(editEvent.category);
       setUserId(editEvent.userId);
+      setStartDate(editEvent.startDate ?? "");
+      setEndDate(editEvent.endDate ?? "");
     } else {
       setName("");
       setDefaultAmount("");
       setDayOfMonth("1");
       setCategory("servicios");
       setUserId("jose");
+      setStartDate("");
+      setEndDate("");
     }
   }, [editEvent, open]);
 
@@ -77,6 +83,12 @@ export function RecurringFormDrawer({
       return;
     }
 
+    // Ambas fechas son opcionales; si ambas existen, fin no puede ser anterior a inicio.
+    if (startDate && endDate && endDate < startDate) {
+      toast.error("La fecha de fin no puede ser anterior a la de inicio");
+      return;
+    }
+
     setSaving(true);
     try {
       if (editEvent) {
@@ -86,6 +98,8 @@ export function RecurringFormDrawer({
           dayOfMonth: parsedDay,
           category,
           userId,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
         });
         toast.success("Evento actualizado");
       } else {
@@ -96,6 +110,8 @@ export function RecurringFormDrawer({
           category,
           userId,
           isActive: true,
+          startDate: startDate || undefined,
+          endDate: endDate || undefined,
         });
         toast.success("Evento recurrente creado");
       }
@@ -151,6 +167,27 @@ export function RecurringFormDrawer({
                 value={dayOfMonth}
                 onChange={(e) => setDayOfMonth(e.target.value)}
               />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="event-start-date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha de inicio</Label>
+                <Input
+                  id="event-start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="event-end-date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha de fin</Label>
+                <Input
+                  id="event-end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">

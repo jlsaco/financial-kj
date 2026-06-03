@@ -10,6 +10,8 @@ function toEvent(row: {
   is_active: boolean;
   user_id: string;
   created_at: string;
+  start_date: string | null;
+  end_date: string | null;
 }): RecurringEvent {
   return {
     id: row.id,
@@ -20,6 +22,8 @@ function toEvent(row: {
     isActive: row.is_active,
     userId: row.user_id as RecurringEvent["userId"],
     createdAt: row.created_at,
+    startDate: row.start_date ?? undefined,
+    endDate: row.end_date ?? undefined,
   };
 }
 
@@ -68,6 +72,8 @@ export async function insertRecurringEvent(
       default_amount: event.defaultAmount,
       is_active: event.isActive,
       user_id: event.userId,
+      start_date: event.startDate ?? null,
+      end_date: event.endDate ?? null,
     })
     .select()
     .single();
@@ -86,6 +92,8 @@ export async function updateRecurringEvent(
   if (updates.defaultAmount !== undefined) dbUpdates.default_amount = updates.defaultAmount;
   if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
   if (updates.userId !== undefined) dbUpdates.user_id = updates.userId;
+  if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
+  if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
 
   const { data, error } = await supabase
     .from("recurring_events")

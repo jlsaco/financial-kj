@@ -56,6 +56,8 @@ export interface RecurringEvent {
   isActive: boolean;
   userId: UserId;
   createdAt: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface MonthPaymentConfig {

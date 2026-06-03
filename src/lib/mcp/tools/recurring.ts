@@ -3,10 +3,19 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   fetchRecurringEvents,
   insertRecurringEvent,
+  updateRecurringEvent,
   upsertMonthConfig,
   deleteRecurringEvent,
 } from "@/store/recurring-store";
-import { ok, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
+import { ok, fail, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
+
+/** Fecha en formato YYYY-MM-DD. */
+const zDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Formato esperado YYYY-MM-DD");
+
+/** Fecha YYYY-MM-DD o cadena vacía (para limpiar la fecha). */
+const zDateOrEmpty = z.union([zDate, z.literal("")]);
 
 /** Tools over `recurring_events` y `month_payment_configs` (gastos recurrentes). */
 export function registerRecurringTools(server: McpServer): void {
@@ -20,9 +29,33 @@ export function registerRecurringTools(server: McpServer): void {
       defaultAmount: z.number().positive().describe("Monto mensual por defecto"),
       userId: zUserId,
       isActive: z.boolean().optional().describe("Activo (por defecto true)"),
+      startDate: zDate
+        .optional()
+        .describe(
+          "Fecha de inicio del recurrente YYYY-MM-DD (opcional; si se omite se asume el mes actual)"
+        ),
+      endDate: zDate
+        .optional()
+        .describe(
+          "Fecha de fin del recurrente YYYY-MM-DD (opcional; si se omite es indefinido)"
+        ),
     },
-    async ({ name, category, dayOfMonth, defaultAmount, userId, isActive }) => {
+    async ({
+      name,
+      category,
+      dayOfMonth,
+      defaultAmount,
+      userId,
+      isActive,
+      startDate,
+      endDate,
+    }) => {
       return guard(async () => {
+        if (startDate && endDate && endDate < startDate) {
+          return fail(
+            "La fecha de fin no puede ser anterior a la fecha de inicio."
+          );
+        }
         const event = await insertRecurringEvent({
           name,
           category,
@@ -30,6 +63,8 @@ export function registerRecurringTools(server: McpServer): void {
           defaultAmount,
           userId,
           isActive: isActive ?? true,
+          startDate,
+          endDate,
         });
         return ok(event);
       });
@@ -52,22 +87,95 @@ export function registerRecurringTools(server: McpServer): void {
   );
 
   server.tool(
+    "actualizar_recurrente",
+    "Actualiza campos de un evento recurrente existente (recurring_events) por su id. " +
+      "Solo se modifican los campos enviados; el resto se conserva. Permite editar " +
+      "las fechas de inicio/fin del recurrente.",
+    {
+      id: z.string().uuid().describe("ID (uuid) del evento recurrente a actualizar"),
+      name: z.string().optional().describe("Nuevo nombre"),
+      category: zCategory.optional().describe("Nueva categoría"),
+      dayOfMonth: z
+        .number()
+        .int()
+        .min(1)
+        .max(31)
+        .optional()
+        .describe("Nuevo día del mes de cobro"),
+      defaultAmount: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Nuevo monto mensual por defecto"),
+      isActive: z.boolean().optional().describe("Activar/desactivar el recurrente"),
+      userId: zUserId.optional().describe("Nuevo responsable"),
+      startDate: zDateOrEmpty
+        .optional()
+        .describe(
+          "Fecha de inicio YYYY-MM-DD (cadena vacía para limpiarla; si no hay inicio se asume el mes actual)"
+        ),
+      endDate: zDateOrEmpty
+        .optional()
+        .describe(
+          "Fecha de fin YYYY-MM-DD (cadena vacía para limpiarla; si no hay fin es indefinido)"
+        ),
+    },
+    async ({
+      id,
+      name,
+      category,
+      dayOfMonth,
+      defaultAmount,
+      isActive,
+      userId,
+      startDate,
+      endDate,
+    }) => {
+      return guard(async () => {
+        if (startDate && endDate && endDate < startDate) {
+          return fail(
+            "La fecha de fin no puede ser anterior a la fecha de inicio."
+          );
+        }
+        const event = await updateRecurringEvent(id, {
+          ...(name !== undefined && { name }),
+          ...(category !== undefined && { category }),
+          ...(dayOfMonth !== undefined && { dayOfMonth }),
+          ...(defaultAmount !== undefined && { defaultAmount }),
+          ...(isActive !== undefined && { isActive }),
+          ...(userId !== undefined && { userId }),
+          ...(startDate !== undefined && { startDate }),
+          ...(endDate !== undefined && { endDate }),
+        });
+        return ok(event);
+      });
+    }
+  );
+
+  server.tool(
     "registrar_pago_mes",
-    "Registra/actualiza el pago de un recurrente para un mes concreto (month_payment_configs, upsert por evento+mes+año).",
+    "Registra/actualiza el pago de un recurrente para un mes concreto (month_payment_configs, " +
+      "upsert por evento+mes+año). Opcionalmente vincula la cuota a un finance_record " +
+      "existente vía recordId.",
     {
       recurringEventId: z.string().uuid().describe("ID del evento recurrente"),
       month: z.number().int().min(1).max(12),
       year: z.number().int().min(2000).max(2100),
       amount: z.number().positive().describe("Monto del mes"),
       isPaid: z.boolean().optional().describe("¿Pagado? (por defecto false)"),
-      paidDate: z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/)
+      paidDate: zDate
         .optional()
         .describe("Fecha de pago YYYY-MM-DD (por defecto hoy si isPaid)"),
+      recordId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "ID (uuid) de un finance_record existente al que se vincula esta cuota (opcional)"
+        ),
       note: z.string().optional(),
     },
-    async ({ recurringEventId, month, year, amount, isPaid, paidDate, note }) => {
+    async ({ recurringEventId, month, year, amount, isPaid, paidDate, recordId, note }) => {
       return guard(async () => {
         const paid = isPaid ?? false;
         const config = await upsertMonthConfig({
@@ -77,6 +185,7 @@ export function registerRecurringTools(server: McpServer): void {
           amount,
           isPaid: paid,
           paidDate: paid ? paidDate ?? today() : undefined,
+          recordId,
           note,
         });
         return ok(config);
