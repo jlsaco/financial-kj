@@ -103,6 +103,7 @@ export function registerDebtTools(server: McpServer): void {
           undefined;
         const event = await insertRecurringEvent({
           name,
+          type: "gasto",
           category: "deuda",
           dayOfMonth,
           defaultAmount: cuota,

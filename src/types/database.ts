@@ -143,6 +143,7 @@ export type Database = {
           principal_amount: number | null
           start_date: string | null
           total_amount: number | null
+          type: Database["public"]["Enums"]["record_type"]
           user_id: Database["public"]["Enums"]["user_id"]
         }
         Insert: {
@@ -159,6 +160,7 @@ export type Database = {
           principal_amount?: number | null
           start_date?: string | null
           total_amount?: number | null
+          type?: Database["public"]["Enums"]["record_type"]
           user_id: Database["public"]["Enums"]["user_id"]
         }
         Update: {
@@ -175,6 +177,7 @@ export type Database = {
           principal_amount?: number | null
           start_date?: string | null
           total_amount?: number | null
+          type?: Database["public"]["Enums"]["record_type"]
           user_id?: Database["public"]["Enums"]["user_id"]
         }
         Relationships: []

@@ -8,7 +8,7 @@ import {
   deleteRecurringEvent,
 } from "@/store/recurring-store";
 import { computeDebtEndDate } from "@/lib/debt-helpers";
-import { ok, fail, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
+import { ok, fail, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/shared";
 
 /** Fecha en formato YYYY-MM-DD. */
 const zDate = z
@@ -22,7 +22,9 @@ const zDateOrEmpty = z.union([zDate, z.literal("")]);
 export function registerRecurringTools(server: McpServer): void {
   server.tool(
     "crear_gasto_recurrente",
-    "Crea un evento recurrente (p.ej. arriendo, suscripción) en recurring_events.",
+    "Crea un evento recurrente de tipo GASTO (p.ej. arriendo, suscripción) en " +
+      "recurring_events. Para ingresos recurrentes (p.ej. salario) usa " +
+      "crear_ingreso_recurrente.",
     {
       name: z.string().describe("Nombre del recurrente, p.ej. 'Arriendo'"),
       category: zCategory,
@@ -59,6 +61,66 @@ export function registerRecurringTools(server: McpServer): void {
         }
         const event = await insertRecurringEvent({
           name,
+          type: "gasto",
+          category,
+          dayOfMonth,
+          defaultAmount,
+          userId,
+          isActive: isActive ?? true,
+          startDate,
+          endDate,
+        });
+        return ok(event);
+      });
+    }
+  );
+
+  server.tool(
+    "crear_ingreso_recurrente",
+    "Crea un evento recurrente de tipo INGRESO (p.ej. salario, arriendo cobrado) " +
+      "en recurring_events. No se permite category='deuda' para ingresos.",
+    {
+      name: z.string().describe("Nombre del recurrente, p.ej. 'Salario'"),
+      category: zCategory,
+      dayOfMonth: z.number().int().min(1).max(31).describe("Día del mes en que se recibe"),
+      defaultAmount: z.number().positive().describe("Monto mensual por defecto"),
+      userId: zUserId,
+      isActive: z.boolean().optional().describe("Activo (por defecto true)"),
+      startDate: zDate
+        .optional()
+        .describe(
+          "Fecha de inicio del recurrente YYYY-MM-DD (opcional; si se omite se asume el mes actual)"
+        ),
+      endDate: zDate
+        .optional()
+        .describe(
+          "Fecha de fin del recurrente YYYY-MM-DD (opcional; si se omite es indefinido)"
+        ),
+    },
+    async ({
+      name,
+      category,
+      dayOfMonth,
+      defaultAmount,
+      userId,
+      isActive,
+      startDate,
+      endDate,
+    }) => {
+      return guard(async () => {
+        if (category === "deuda") {
+          return fail(
+            "Un ingreso recurrente no puede tener category='deuda'. Usa otra categoría."
+          );
+        }
+        if (startDate && endDate && endDate < startDate) {
+          return fail(
+            "La fecha de fin no puede ser anterior a la fecha de inicio."
+          );
+        }
+        const event = await insertRecurringEvent({
+          name,
+          type: "ingreso",
           category,
           dayOfMonth,
           defaultAmount,
@@ -74,7 +136,8 @@ export function registerRecurringTools(server: McpServer): void {
 
   server.tool(
     "listar_recurrentes",
-    "Lista los eventos recurrentes (recurring_events).",
+    "Lista los eventos recurrentes (recurring_events). Cada evento incluye su " +
+      "campo `type` ('gasto' o 'ingreso').",
     {
       soloActivos: z.boolean().optional().describe("Filtrar solo los activos"),
     },
@@ -94,10 +157,16 @@ export function registerRecurringTools(server: McpServer): void {
       "las fechas de inicio/fin del recurrente. Para deudas (category='deuda') admite " +
       "los campos totalAmount/principalAmount/interestRate/installmentsCount; si se " +
       "cambia startDate o installmentsCount se recalcula automáticamente la end_date " +
-      "(inicio + (cuotas − 1) meses en el día del mes).",
+      "(inicio + (cuotas − 1) meses en el día del mes). También permite cambiar el " +
+      "tipo (type) entre 'gasto' e 'ingreso'; un ingreso no puede tener category='deuda'.",
     {
       id: z.string().uuid().describe("ID (uuid) del evento recurrente a actualizar"),
       name: z.string().optional().describe("Nuevo nombre"),
+      type: zRecordType
+        .optional()
+        .describe(
+          "Nuevo tipo del recurrente: 'gasto' o 'ingreso'. Un ingreso no puede tener category='deuda'."
+        ),
       category: zCategory.optional().describe("Nueva categoría"),
       dayOfMonth: z
         .number()
@@ -148,6 +217,7 @@ export function registerRecurringTools(server: McpServer): void {
     async ({
       id,
       name,
+      type,
       category,
       dayOfMonth,
       defaultAmount,
@@ -170,7 +240,18 @@ export function registerRecurringTools(server: McpServer): void {
         const existing = (await fetchRecurringEvents()).find((e) => e.id === id);
         if (!existing) return fail(`No existe un recurrente con id ${id}.`);
 
-        const isDebt = (category ?? existing.category) === "deuda";
+        // Validamos con los valores efectivos (los del update o, si no vienen,
+        // los actuales del recurrente). El CHECK de la BD es el respaldo final.
+        const effType = type ?? existing.type;
+        const effCategory = category ?? existing.category;
+        if (effType === "ingreso" && effCategory === "deuda") {
+          return fail(
+            "Un recurrente de tipo 'ingreso' no puede tener category='deuda'. " +
+              "Cambia la categoría o el tipo."
+          );
+        }
+
+        const isDebt = effCategory === "deuda";
 
         // En deudas, si cambia startDate o installmentsCount recalculamos end_date.
         let resolvedEndDate = endDate;
@@ -196,6 +277,7 @@ export function registerRecurringTools(server: McpServer): void {
 
         const event = await updateRecurringEvent(id, {
           ...(name !== undefined && { name }),
+          ...(type !== undefined && { type }),
           ...(category !== undefined && { category }),
           ...(dayOfMonth !== undefined && { dayOfMonth }),
           ...(defaultAmount !== undefined && { defaultAmount }),

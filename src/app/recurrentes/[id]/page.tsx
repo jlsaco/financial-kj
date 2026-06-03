@@ -101,7 +101,20 @@ export default function RecurringDetailPage() {
         <div className="rounded-2xl bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)]">
           <div className="flex items-center justify-between">
             <div className="space-y-3">
-              <CategoryBadge category={event.category} />
+              <div className="flex flex-wrap items-center gap-2">
+                <CategoryBadge category={event.category} />
+                {event.category !== "deuda" && (
+                  <span
+                    className={`rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      event.type === "ingreso"
+                        ? "bg-emerald-500/15 text-emerald-600"
+                        : "bg-rose-500/15 text-rose-600"
+                    }`}
+                  >
+                    {event.type === "ingreso" ? "Ingreso" : "Gasto"}
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 <UserAvatar userId={event.userId} />
                 <span className="text-sm text-foreground/50">
@@ -110,7 +123,12 @@ export default function RecurringDetailPage() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-3xl font-bold tracking-tight tabular-nums font-mono">
+              <p
+                className={`text-3xl font-bold tracking-tight tabular-nums font-mono ${
+                  event.type === "ingreso" ? "text-emerald-600" : ""
+                }`}
+              >
+                {event.type === "ingreso" ? "+" : ""}
                 {formatCurrency(event.defaultAmount)}
               </p>
               <p className="text-xs text-foreground/40">

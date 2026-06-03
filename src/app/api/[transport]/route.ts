@@ -24,10 +24,13 @@ const mcpHandler = createMcpHandler(
       "(finance_records), gastos recurrentes (recurring_events / month_payment_configs), " +
       "deudas (registros con category='deuda') y presupuestos. Categorías válidas: " +
       "movilidad, alimentacion-salud, hogar-entretenimiento, deuda, servicios. " +
-      "Usuarios: jose, karen, bot-correos. Los recurrentes admiten fechas de " +
+      "Usuarios: jose, karen, bot-correos. Los recurrentes (recurring_events) pueden " +
+      "ser de tipo 'gasto' o 'ingreso' (campo type): crear_gasto_recurrente para " +
+      "gastos y crear_ingreso_recurrente para ingresos (p.ej. salario); un ingreso " +
+      "recurrente no puede tener category='deuda'. Los recurrentes admiten fechas de " +
       "inicio/fin opcionales (startDate/endDate, YYYY-MM-DD): sin inicio se asume " +
       "el mes actual y sin fin es indefinido. Para editar un recurrente (incluidas " +
-      "sus fechas) usa actualizar_recurrente. Al registrar el pago de un mes se " +
+      "sus fechas o su type) usa actualizar_recurrente. Al registrar el pago de un mes se " +
       "puede vincular la cuota a un finance_record existente con recordId. Las deudas " +
       "con cuotas son recurrentes con category='deuda' y campos extra (totalAmount = " +
       "total a pagar, principalAmount = capital, interestRate = % interés, " +
