@@ -32,17 +32,17 @@ export function RecordCard({ record, onEdit, onDelete }: RecordCardProps) {
       <AmountDisplay amount={record.amount} type={record.type} className="text-sm" />
       <div onClick={(e) => e.stopPropagation()}>
         <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent">
+          <DropdownMenuTrigger className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl hover:bg-accent">
             <MoreVertical className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(record)}>
+            <DropdownMenuItem onClick={() => onEdit(record)} className="min-h-11">
               <Pencil className="mr-2 h-4 w-4" strokeWidth={1.5} />
               Editar
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => onDelete(record)}
-              className="text-destructive"
+              className="min-h-11 text-destructive"
             >
               <Trash2 className="mr-2 h-4 w-4" strokeWidth={1.5} />
               Eliminar
