@@ -71,7 +71,7 @@ export function BudgetEditDrawer({
           </DrawerHeader>
           <div className="space-y-5 px-4">
             <div className="space-y-1.5">
-              <Label htmlFor="budget-amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Presupuesto mensual</Label>
+              <Label htmlFor="budget-amount" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Presupuesto mensual</Label>
               <Input
                 id="budget-amount"
                 type="number"

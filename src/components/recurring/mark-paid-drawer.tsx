@@ -211,7 +211,7 @@ export function MarkPaidDrawer({
           {mode === "create" ? (
             <div className="mt-5 space-y-5 px-4">
               <div className="space-y-1.5">
-                <Label htmlFor="mp-amount" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Valor</Label>
+                <Label htmlFor="mp-amount" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Valor</Label>
                 <Input
                   id="mp-amount"
                   type="number"
@@ -224,7 +224,7 @@ export function MarkPaidDrawer({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="mp-name" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
+                <Label htmlFor="mp-name" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
                 <Input
                   id="mp-name"
                   placeholder="Descripcion del registro"
@@ -234,7 +234,7 @@ export function MarkPaidDrawer({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
+                <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Categoria</Label>
                 <div className="grid grid-cols-2 gap-2">
                   {ALL_CATEGORIES.map((cat) => {
                     const config = CATEGORIES[cat];
@@ -259,7 +259,7 @@ export function MarkPaidDrawer({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="mp-date" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Fecha</Label>
+                <Label htmlFor="mp-date" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Fecha</Label>
                 <Input
                   id="mp-date"
                   type="date"
@@ -269,7 +269,7 @@ export function MarkPaidDrawer({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>
+                <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>
                 <UserSelector value={userId} onChange={setUserId} />
               </div>
             </div>

@@ -118,7 +118,7 @@ export function IssueReportDrawer({
             <div className="space-y-1.5">
               <Label
                 htmlFor="issue-title"
-                className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70"
+                className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70"
               >
                 Título
               </Label>
@@ -140,7 +140,7 @@ export function IssueReportDrawer({
               <div className="flex items-center justify-between">
                 <Label
                   htmlFor="issue-description"
-                  className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70"
+                  className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70"
                 >
                   Descripción
                 </Label>
@@ -164,7 +164,7 @@ export function IssueReportDrawer({
 
             {/* Reporter */}
             <div className="space-y-1.5">
-              <Label className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
                 Reportado por
               </Label>
               <UserSelector value={reporter} onChange={setReporter} />
