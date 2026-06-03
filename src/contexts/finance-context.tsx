@@ -131,7 +131,7 @@ function financeReducer(
 
 interface FinanceContextValue {
   state: FinanceState;
-  addRecord: (data: Omit<FinanceRecord, "id" | "createdAt" | "updatedAt">) => Promise<void>;
+  addRecord: (data: Omit<FinanceRecord, "id" | "createdAt" | "updatedAt">) => Promise<FinanceRecord>;
   updateRecord: (id: string, updates: Partial<FinanceRecord>) => Promise<void>;
   deleteRecord: (id: string) => Promise<void>;
   addRecurringEvent: (data: Omit<RecurringEvent, "id" | "createdAt">) => Promise<void>;
@@ -177,6 +177,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     async (data: Omit<FinanceRecord, "id" | "createdAt" | "updatedAt">) => {
       const saved = await recordsStore.insertRecord(data);
       dispatch({ type: "ADD_RECORD", payload: saved });
+      return saved;
     },
     []
   );

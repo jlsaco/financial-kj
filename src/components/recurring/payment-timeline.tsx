@@ -7,31 +7,84 @@ import { getEffectiveDayOfMonth } from "@/lib/date-helpers";
 import { formatCurrency } from "@/lib/formatters";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Check, Clock, AlertCircle, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { MarkPaidDrawer } from "@/components/recurring/mark-paid-drawer";
 
 interface PaymentTimelineProps {
   event: RecurringEvent;
+}
+
+/** Suma `offset` meses a (month, year) normalizando el desbordamiento. */
+function addMonths(
+  month: number,
+  year: number,
+  offset: number
+): { month: number; year: number } {
+  let m = month + offset;
+  let y = year;
+  while (m < 1) {
+    m += 12;
+    y--;
+  }
+  while (m > 12) {
+    m -= 12;
+    y++;
+  }
+  return { month: m, year: y };
 }
 
 export function PaymentTimeline({ event }: PaymentTimelineProps) {
   const { state, setMonthConfig } = useFinance();
   const [editingMonth, setEditingMonth] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState("");
+  const [payTarget, setPayTarget] = useState<{
+    month: number;
+    year: number;
+    amount: number;
+  } | null>(null);
 
   const today = new Date();
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
 
-  // Generate 12 months: 3 past + current + 8 future
+  // Ventana natural de 12 meses: 3 atrás + actual + 8 adelante.
+  const WINDOW_PAST = -3;
+  const WINDOW_FUTURE = 8;
+  const naturalLower = addMonths(currentMonth, currentYear, WINDOW_PAST);
+  const naturalUpper = addMonths(currentMonth, currentYear, WINDOW_FUTURE);
+
+  // Índice ordinal de un mes (año*12+mes) para comparar/intersectar rangos.
+  const monthIndex = (m: number, y: number) => y * 12 + (m - 1);
+
+  // Inicio efectivo del recurrente. Si NO hay startDate asumimos el límite
+  // inferior natural de la ventana: así NO recortamos el pasado y los
+  // recurrentes existentes (sin fechas) conservan su historial visible.
+  const effectiveStart = event.startDate
+    ? (() => {
+        const d = new Date(event.startDate + "T12:00:00");
+        return { month: d.getMonth() + 1, year: d.getFullYear() };
+      })()
+    : naturalLower;
+  // Fin efectivo. Si NO hay endDate asumimos el límite superior natural
+  // (indefinido), por lo que se comporta como antes.
+  const effectiveEnd = event.endDate
+    ? (() => {
+        const d = new Date(event.endDate + "T12:00:00");
+        return { month: d.getMonth() + 1, year: d.getFullYear() };
+      })()
+    : naturalUpper;
+
+  const startIdx = monthIndex(effectiveStart.month, effectiveStart.year);
+  const endIdx = monthIndex(effectiveEnd.month, effectiveEnd.year);
+
+  // Generamos la ventana de 12 meses e intersectamos con [effectiveStart, effectiveEnd].
   const months: { month: number; year: number }[] = [];
-  for (let offset = -3; offset <= 8; offset++) {
-    let m = currentMonth + offset;
-    let y = currentYear;
-    while (m < 1) { m += 12; y--; }
-    while (m > 12) { m -= 12; y++; }
+  for (let offset = WINDOW_PAST; offset <= WINDOW_FUTURE; offset++) {
+    const { month: m, year: y } = addMonths(currentMonth, currentYear, offset);
+    const idx = monthIndex(m, y);
+    if (idx < startIdx || idx > endIdx) continue;
     months.push({ month: m, year: y });
   }
 
@@ -101,26 +154,39 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
     }
   };
 
-  const togglePaid = async (month: number, year: number) => {
+  // Marcar como pagado abre un modal (crear gasto / vincular existente).
+  const openMarkPaid = (month: number, year: number) => {
     const existing = getConfig(month, year);
-    const newIsPaid = !existing?.isPaid;
+    setPayTarget({
+      month,
+      year,
+      amount: existing?.amount ?? event.defaultAmount,
+    });
+  };
+
+  // Desmarcar: vuelve a pendiente, limpia paidDate y recordId. NO borra el
+  // registro real vinculado, solo lo desvincula de la cuota.
+  const unmarkPaid = async (month: number, year: number) => {
+    const existing = getConfig(month, year);
     try {
       await setMonthConfig({
         recurringEventId: event.id,
         month,
         year,
         amount: existing?.amount ?? event.defaultAmount,
-        isPaid: newIsPaid,
-        paidDate: newIsPaid ? new Date().toISOString() : undefined,
+        isPaid: false,
+        paidDate: undefined,
+        recordId: undefined,
         note: existing?.note,
       });
-      toast.success(newIsPaid ? "Marcado como pagado" : "Marcado como pendiente");
+      toast.success("Marcado como pendiente");
     } catch {
       toast.error("Error al guardar");
     }
   };
 
   return (
+    <>
     <div className="relative pl-6">
       {/* Timeline line */}
       <div className="absolute left-[11px] top-0 h-full w-px bg-border/50" />
@@ -241,7 +307,11 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
               )}
 
               <button
-                onClick={() => togglePaid(month, year)}
+                onClick={() =>
+                  config?.isPaid
+                    ? unmarkPaid(month, year)
+                    : openMarkPaid(month, year)
+                }
                 className={cn(
                   "h-7 rounded-lg px-3 text-[12px] font-medium transition-all active:scale-[0.97]",
                   config?.isPaid
@@ -260,5 +330,19 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
         );
       })}
     </div>
+
+    {payTarget && (
+      <MarkPaidDrawer
+        open={payTarget !== null}
+        onOpenChange={(o) => {
+          if (!o) setPayTarget(null);
+        }}
+        event={event}
+        month={payTarget.month}
+        year={payTarget.year}
+        monthAmount={payTarget.amount}
+      />
+    )}
+    </>
   );
 }

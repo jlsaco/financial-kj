@@ -24,9 +24,13 @@ const mcpHandler = createMcpHandler(
       "(finance_records), gastos recurrentes (recurring_events / month_payment_configs), " +
       "deudas (registros con category='deuda') y presupuestos. Categorías válidas: " +
       "movilidad, alimentacion-salud, hogar-entretenimiento, deuda, servicios. " +
-      "Usuarios: jose, karen, bot-correos. Se pueden borrar definitivamente " +
-      "registros/deudas (borrar_registro) y eventos recurrentes (borrar_recurrente); " +
-      "el borrado es irreversible.",
+      "Usuarios: jose, karen, bot-correos. Los recurrentes admiten fechas de " +
+      "inicio/fin opcionales (startDate/endDate, YYYY-MM-DD): sin inicio se asume " +
+      "el mes actual y sin fin es indefinido. Para editar un recurrente (incluidas " +
+      "sus fechas) usa actualizar_recurrente. Al registrar el pago de un mes se " +
+      "puede vincular la cuota a un finance_record existente con recordId. Se pueden " +
+      "borrar definitivamente registros/deudas (borrar_registro) y eventos " +
+      "recurrentes (borrar_recurrente); el borrado es irreversible.",
   },
   {
     basePath: "/api",
