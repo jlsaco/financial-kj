@@ -28,9 +28,15 @@ const mcpHandler = createMcpHandler(
       "inicio/fin opcionales (startDate/endDate, YYYY-MM-DD): sin inicio se asume " +
       "el mes actual y sin fin es indefinido. Para editar un recurrente (incluidas " +
       "sus fechas) usa actualizar_recurrente. Al registrar el pago de un mes se " +
-      "puede vincular la cuota a un finance_record existente con recordId. Se pueden " +
-      "borrar definitivamente registros/deudas (borrar_registro) y eventos " +
-      "recurrentes (borrar_recurrente); el borrado es irreversible.",
+      "puede vincular la cuota a un finance_record existente con recordId. Las deudas " +
+      "con cuotas son recurrentes con category='deuda' y campos extra (totalAmount = " +
+      "total a pagar, principalAmount = capital, interestRate = % interés, " +
+      "installmentsCount = nº de cuotas): la cuota mensual es totalAmount ÷ cuotas y la " +
+      "fecha de fin se calcula automáticamente. Usa crear_deuda_recurrente para crearlas, " +
+      "actualizar_recurrente para editar sus campos (recalcula end_date al cambiar inicio/" +
+      "cuotas) y resumen_deuda para el saldo pendiente, progreso, próxima cuota y fin " +
+      "estimado. Se pueden borrar definitivamente registros/deudas (borrar_registro) y " +
+      "eventos recurrentes (borrar_recurrente); el borrado es irreversible.",
   },
   {
     basePath: "/api",

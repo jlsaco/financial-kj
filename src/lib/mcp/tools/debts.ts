@@ -1,8 +1,13 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { fetchRecords, insertRecord } from "@/store/records-store";
-import { insertRecurringEvent } from "@/store/recurring-store";
-import { ok, guard, today, zUserId } from "@/lib/mcp/shared";
+import {
+  fetchRecurringEvents,
+  fetchMonthConfigs,
+  insertRecurringEvent,
+} from "@/store/recurring-store";
+import { computeDebtEndDate, getDebtSummary } from "@/lib/debt-helpers";
+import { ok, fail, guard, today, zUserId } from "@/lib/mcp/shared";
 
 /**
  * Tools para deudas. No existe una tabla `deudas`: una deuda es un registro
@@ -40,24 +45,102 @@ export function registerDebtTools(server: McpServer): void {
 
   server.tool(
     "crear_deuda_recurrente",
-    "Crea una deuda con cuota mensual (recurring_events con category='deuda').",
+    "Crea una deuda con cuotas (recurring_events con category='deuda'). La cuota " +
+      "mensual (defaultAmount) se calcula como totalAmount ÷ installmentsCount si no " +
+      "se provee. La fecha de fin (end_date) se calcula automáticamente como " +
+      "inicio + (cuotas − 1) meses en el día del mes; si no se da startDate se usa el " +
+      "mes actual como inicio.",
     {
       name: z.string().describe("Nombre, p.ej. 'Cuota carro'"),
       dayOfMonth: z.number().int().min(1).max(31).describe("Día de cobro de la cuota"),
-      defaultAmount: z.number().positive().describe("Valor de la cuota mensual"),
+      totalAmount: z
+        .number()
+        .positive()
+        .describe("Total a pagar (capital + intereses)"),
+      installmentsCount: z
+        .number()
+        .int()
+        .positive()
+        .describe("Número de cuotas"),
+      principalAmount: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Capital prestado, sin intereses (opcional)"),
+      interestRate: z
+        .number()
+        .optional()
+        .describe("% de interés (opcional)"),
+      defaultAmount: z
+        .number()
+        .positive()
+        .optional()
+        .describe(
+          "Valor de la cuota mensual (opcional; por defecto totalAmount ÷ installmentsCount)"
+        ),
+      startDate: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional()
+        .describe("Fecha de inicio YYYY-MM-DD (opcional; por defecto el mes actual)"),
       userId: zUserId,
     },
-    async ({ name, dayOfMonth, defaultAmount, userId }) => {
+    async ({
+      name,
+      dayOfMonth,
+      totalAmount,
+      installmentsCount,
+      principalAmount,
+      interestRate,
+      defaultAmount,
+      startDate,
+      userId,
+    }) => {
       return guard(async () => {
+        const cuota = defaultAmount ?? totalAmount / installmentsCount;
+        const endDate =
+          computeDebtEndDate(dayOfMonth, installmentsCount, startDate) ??
+          undefined;
         const event = await insertRecurringEvent({
           name,
           category: "deuda",
           dayOfMonth,
-          defaultAmount,
+          defaultAmount: cuota,
           userId,
           isActive: true,
+          startDate,
+          endDate,
+          totalAmount,
+          principalAmount,
+          interestRate,
+          installmentsCount,
         });
         return ok(event);
+      });
+    }
+  );
+
+  server.tool(
+    "resumen_deuda",
+    "Devuelve el resumen de una deuda recurrente: saldo pendiente, cuotas pagadas/" +
+      "restantes, monto pagado, próxima cuota (con fecha y monto), progreso (%), " +
+      "fecha de fin estimada, % de interés y total/capital. Recibe el id (uuid) del " +
+      "recurrente (debe tener category='deuda').",
+    {
+      id: z.string().uuid().describe("ID (uuid) del recurrente con category='deuda'"),
+    },
+    async ({ id }) => {
+      return guard(async () => {
+        const [events, configs] = await Promise.all([
+          fetchRecurringEvents(),
+          fetchMonthConfigs(),
+        ]);
+        const event = events.find((e) => e.id === id);
+        if (!event) return fail(`No existe un recurrente con id ${id}.`);
+        if (event.category !== "deuda")
+          return fail(`El recurrente ${id} no es una deuda (category='deuda').`);
+        const summary = getDebtSummary(event, configs);
+        return ok({ event, summary });
       });
     }
   );

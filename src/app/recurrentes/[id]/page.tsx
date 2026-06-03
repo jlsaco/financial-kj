@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/shared/user-selector";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/formatters";
 import { USERS } from "@/lib/constants";
+import { getDebtSummary } from "@/lib/debt-helpers";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -41,6 +42,20 @@ export default function RecurringDetailPage() {
       </div>
     );
   }
+
+  const debtSummary =
+    event.category === "deuda"
+      ? getDebtSummary(event, state.monthConfigs)
+      : null;
+
+  const formatDateLabel = (iso: string): string => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("es-CO", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   const handleDelete = async () => {
     try {
@@ -105,9 +120,116 @@ export default function RecurringDetailPage() {
           </div>
         </div>
 
+        {/* Debt summary card */}
+        {debtSummary && (
+          <div className="rounded-2xl bg-card p-6 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)]">
+            {/* Saldo pendiente destacado */}
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wider text-foreground/35">
+                  Saldo pendiente
+                </p>
+                <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums font-mono">
+                  {formatCurrency(debtSummary.pendingAmount)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-semibold tabular-nums">
+                  {debtSummary.paidCount} de {debtSummary.installmentsCount}
+                </p>
+                <p className="text-[11px] text-foreground/40">cuotas pagadas</p>
+              </div>
+            </div>
+
+            {/* Barra de progreso */}
+            <div className="mt-4">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className="h-full rounded-full bg-emerald-500 transition-all"
+                  style={{ width: `${debtSummary.progressPct}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] text-foreground/40">
+                {Math.round(debtSummary.progressPct)}% pagado ·{" "}
+                {formatCurrency(debtSummary.paidAmount)} de{" "}
+                {formatCurrency(debtSummary.total)}
+              </p>
+            </div>
+
+            {/* Próxima cuota */}
+            {debtSummary.nextInstallment && (
+              <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/40 px-3 py-2.5">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                    Próxima cuota
+                  </p>
+                  <p className="text-[13px] font-medium">
+                    {formatDateLabel(debtSummary.nextInstallment.dueDate)}
+                  </p>
+                </div>
+                <span className="text-base font-semibold tabular-nums font-mono">
+                  {formatCurrency(debtSummary.nextInstallment.amount)}
+                </span>
+              </div>
+            )}
+
+            {/* Detalle de magnitudes */}
+            <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border/40 pt-4">
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                  Total a pagar
+                </p>
+                <p className="text-sm font-semibold tabular-nums font-mono">
+                  {formatCurrency(debtSummary.total)}
+                </p>
+              </div>
+              {debtSummary.principal != null && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                    Capital
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums font-mono">
+                    {formatCurrency(debtSummary.principal)}
+                  </p>
+                </div>
+              )}
+              {debtSummary.interestRate != null && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                    Interés
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums">
+                    {debtSummary.interestRate}%
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                  Cuotas restantes
+                </p>
+                <p className="text-sm font-semibold tabular-nums">
+                  {debtSummary.remainingCount}
+                </p>
+              </div>
+              {debtSummary.endDate && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                    Fin estimado
+                  </p>
+                  <p className="text-sm font-semibold">
+                    {formatDateLabel(debtSummary.endDate)}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Payment timeline */}
         <div>
-          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/35">Pagos por mes</h2>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/35">
+            {debtSummary ? "Cuotas" : "Pagos por mes"}
+          </h2>
           <PaymentTimeline event={event} />
         </div>
       </div>
