@@ -17,8 +17,10 @@ import {
   Home,
   CreditCard,
   Wifi,
+  Trash2,
 } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useFinance } from "@/contexts/finance-context";
 import { Category, RecordType, UserId, FinanceRecord } from "@/types";
 import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
@@ -37,8 +39,9 @@ export function RecordFormDrawer({
   onOpenChange,
   editRecord,
 }: RecordFormDrawerProps) {
-  const { addRecord, updateRecord } = useFinance();
+  const { addRecord, updateRecord, deleteRecord } = useFinance();
   const [saving, setSaving] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("");
@@ -100,6 +103,17 @@ export function RecordFormDrawer({
       toast.error("Error al guardar");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!editRecord) return;
+    try {
+      await deleteRecord(editRecord.id);
+      toast.success("Registro eliminado");
+      onOpenChange(false);
+    } catch {
+      toast.error("Error al eliminar");
     }
   };
 
@@ -220,9 +234,29 @@ export function RecordFormDrawer({
             >
               Cancelar
             </Button>
+            {editRecord && (
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteOpen(true)}
+                className="w-full h-11 rounded-xl font-semibold text-destructive hover:bg-destructive/10 hover:text-destructive active:scale-[0.98] transition-all"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={1.8} />
+                Eliminar
+              </Button>
+            )}
           </DrawerFooter>
         </div>
       </DrawerContent>
+
+      {editRecord && (
+        <ConfirmDialog
+          open={deleteOpen}
+          onOpenChange={setDeleteOpen}
+          title="Eliminar registro"
+          description={`¿Estás seguro de eliminar "${editRecord.name}"? Esta acción no se puede deshacer.`}
+          onConfirm={handleDelete}
+        />
+      )}
     </Drawer>
   );
 }
