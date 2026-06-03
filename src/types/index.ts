@@ -9,6 +9,24 @@ export type Category =
 
 export type UserId = "jose" | "karen" | "bot-correos";
 
+export type IssueKind = "bug" | "mejora";
+
+export type IssueState = "open" | "closed";
+
+export interface Issue {
+  id: number;
+  number: number;
+  title: string;
+  body: string | null;
+  state: IssueState;
+  /** "completed" | "not_planned" for closed issues, null when open */
+  stateReason: string | null;
+  labels: string[];
+  url: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface User {
   id: UserId;
   name: string;
