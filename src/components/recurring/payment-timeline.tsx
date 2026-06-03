@@ -313,7 +313,7 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
                     : openMarkPaid(month, year)
                 }
                 className={cn(
-                  "h-7 rounded-lg px-3 text-[12px] font-medium transition-all active:scale-[0.97]",
+                  "inline-flex min-h-11 items-center justify-center rounded-lg px-4 text-[12px] font-medium transition-all active:scale-[0.97]",
                   config?.isPaid
                     ? "border border-border/50 text-muted-foreground hover:bg-accent"
                     : "bg-primary text-primary-foreground hover:bg-primary/90"
