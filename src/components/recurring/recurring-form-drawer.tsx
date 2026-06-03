@@ -188,7 +188,7 @@ export function RecurringFormDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-lg">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col overflow-hidden">
           <DrawerHeader>
             <DrawerTitle>
               {editEvent
@@ -199,7 +199,7 @@ export function RecurringFormDrawer({
             </DrawerTitle>
           </DrawerHeader>
 
-          <div className="space-y-5 px-4">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-2">
             <div className="space-y-1.5">
               <Label htmlFor="event-name" className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground/70">Nombre</Label>
               <Input

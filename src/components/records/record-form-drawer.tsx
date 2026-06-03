@@ -120,14 +120,14 @@ export function RecordFormDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-lg">
+        <div className="mx-auto flex w-full max-w-lg flex-1 flex-col overflow-hidden">
           <DrawerHeader>
             <DrawerTitle>
               {editRecord ? "Editar registro" : "Nuevo registro"}
             </DrawerTitle>
           </DrawerHeader>
 
-          <div className="space-y-5 px-4">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-2">
             {/* Type selector */}
             <div className="flex gap-2">
               <button
