@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, ArrowLeftRight, Repeat, Target, Bug } from "lucide-react";
+import { House, ArrowLeftRight, Repeat, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -10,7 +10,6 @@ const NAV_ITEMS = [
   { href: "/registros", icon: ArrowLeftRight, label: "Registros" },
   { href: "/recurrentes", icon: Repeat, label: "Recurrentes" },
   { href: "/presupuestos", icon: Target, label: "Metas" },
-  { href: "/reportar", icon: Bug, label: "Reportar" },
 ];
 
 export function BottomNav() {

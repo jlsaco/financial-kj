@@ -2,6 +2,7 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MainMenu } from "@/components/layout/main-menu";
 import { useUI } from "@/contexts/ui-context";
 import { formatMonthYear } from "@/lib/formatters";
 
@@ -19,7 +20,10 @@ export function PageHeader({ title, showMonthNav, action }: PageHeaderProps) {
       <div className="mx-auto max-w-lg">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold tracking-tight">{title}</h1>
-          {action}
+          <div className="flex items-center gap-1">
+            {action}
+            <MainMenu />
+          </div>
         </div>
         {showMonthNav && (
           <div className="mt-2 flex items-center justify-center gap-3">
