@@ -24,7 +24,9 @@ const mcpHandler = createMcpHandler(
       "(finance_records), gastos recurrentes (recurring_events / month_payment_configs), " +
       "deudas (registros con category='deuda') y presupuestos. Categorías válidas: " +
       "movilidad, alimentacion-salud, hogar-entretenimiento, deuda, servicios. " +
-      "Usuarios: jose, karen, bot-correos.",
+      "Usuarios: jose, karen, bot-correos. Se pueden borrar definitivamente " +
+      "registros/deudas (borrar_registro) y eventos recurrentes (borrar_recurrente); " +
+      "el borrado es irreversible.",
   },
   {
     basePath: "/api",

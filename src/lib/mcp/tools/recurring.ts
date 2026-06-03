@@ -4,6 +4,7 @@ import {
   fetchRecurringEvents,
   insertRecurringEvent,
   upsertMonthConfig,
+  deleteRecurringEvent,
 } from "@/store/recurring-store";
 import { ok, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
 
@@ -79,6 +80,22 @@ export function registerRecurringTools(server: McpServer): void {
           note,
         });
         return ok(config);
+      });
+    }
+  );
+
+  server.tool(
+    "borrar_recurrente",
+    "Borra de forma definitiva un evento recurrente de recurring_events por su id. " +
+      "Sus configuraciones de pago en month_payment_configs se eliminan en cascada " +
+      "(lo maneja la base de datos). La acción es irreversible.",
+    {
+      id: z.string().uuid().describe("ID (uuid) del evento recurrente a borrar"),
+    },
+    async ({ id }) => {
+      return guard(async () => {
+        await deleteRecurringEvent(id);
+        return ok({ deleted: true, id });
       });
     }
   );

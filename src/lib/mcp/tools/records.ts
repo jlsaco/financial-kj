@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { fetchRecords, insertRecord } from "@/store/records-store";
+import { fetchRecords, insertRecord, deleteRecord } from "@/store/records-store";
 import { ok, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/shared";
 
 /** Tools over `finance_records` (gastos e ingresos). */
@@ -90,6 +90,22 @@ export function registerRecordTools(server: McpServer): void {
           0
         );
         return ok({ count: records.length, totalGastos: total, records });
+      });
+    }
+  );
+
+  server.tool(
+    "borrar_registro",
+    "Borra de forma definitiva un registro de finance_records por su id. " +
+      "Como las deudas son registros con category='deuda', esta tool también " +
+      "sirve para borrar deudas. La acción es irreversible.",
+    {
+      id: z.string().uuid().describe("ID (uuid) del registro a borrar"),
+    },
+    async ({ id }) => {
+      return guard(async () => {
+        await deleteRecord(id);
+        return ok({ deleted: true, id });
       });
     }
   );
