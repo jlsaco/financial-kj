@@ -86,7 +86,7 @@ export default function RegistrosPage() {
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
           <button
             onClick={() => setCategoryFilter("todos")}
-            className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 ${
+            className={`inline-flex min-h-11 shrink-0 items-center rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 ${
               categoryFilter === "todos"
                 ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
                 : "bg-card text-foreground/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:text-foreground"
@@ -100,7 +100,7 @@ export default function RegistrosPage() {
               onClick={() =>
                 setCategoryFilter(categoryFilter === cat ? "todos" : cat)
               }
-              className={`shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 ${
+              className={`inline-flex min-h-11 shrink-0 items-center rounded-xl px-3.5 py-2 text-sm font-medium transition-all active:scale-95 ${
                 categoryFilter === cat
                   ? "bg-primary text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
                   : "bg-card text-foreground/60 shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:text-foreground"
