@@ -12,6 +12,10 @@ function toEvent(row: {
   created_at: string;
   start_date: string | null;
   end_date: string | null;
+  total_amount: number | null;
+  principal_amount: number | null;
+  interest_rate: number | null;
+  installments_count: number | null;
 }): RecurringEvent {
   return {
     id: row.id,
@@ -24,6 +28,12 @@ function toEvent(row: {
     createdAt: row.created_at,
     startDate: row.start_date ?? undefined,
     endDate: row.end_date ?? undefined,
+    totalAmount: row.total_amount != null ? Number(row.total_amount) : undefined,
+    principalAmount:
+      row.principal_amount != null ? Number(row.principal_amount) : undefined,
+    interestRate:
+      row.interest_rate != null ? Number(row.interest_rate) : undefined,
+    installmentsCount: row.installments_count ?? undefined,
   };
 }
 
@@ -74,6 +84,10 @@ export async function insertRecurringEvent(
       user_id: event.userId,
       start_date: event.startDate ?? null,
       end_date: event.endDate ?? null,
+      total_amount: event.totalAmount ?? null,
+      principal_amount: event.principalAmount ?? null,
+      interest_rate: event.interestRate ?? null,
+      installments_count: event.installmentsCount ?? null,
     })
     .select()
     .single();
@@ -94,6 +108,10 @@ export async function updateRecurringEvent(
   if (updates.userId !== undefined) dbUpdates.user_id = updates.userId;
   if (updates.startDate !== undefined) dbUpdates.start_date = updates.startDate || null;
   if (updates.endDate !== undefined) dbUpdates.end_date = updates.endDate || null;
+  if (updates.totalAmount !== undefined) dbUpdates.total_amount = updates.totalAmount ?? null;
+  if (updates.principalAmount !== undefined) dbUpdates.principal_amount = updates.principalAmount ?? null;
+  if (updates.interestRate !== undefined) dbUpdates.interest_rate = updates.interestRate ?? null;
+  if (updates.installmentsCount !== undefined) dbUpdates.installments_count = updates.installmentsCount ?? null;
 
   const { data, error } = await supabase
     .from("recurring_events")

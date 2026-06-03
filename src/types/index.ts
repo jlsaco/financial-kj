@@ -58,6 +58,11 @@ export interface RecurringEvent {
   createdAt: string;
   startDate?: string;
   endDate?: string;
+  /** Campos de deuda (solo cuando category === 'deuda'). */
+  totalAmount?: number;
+  principalAmount?: number;
+  interestRate?: number;
+  installmentsCount?: number;
 }
 
 export interface MonthPaymentConfig {

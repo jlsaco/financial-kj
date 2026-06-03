@@ -7,6 +7,7 @@ import {
   upsertMonthConfig,
   deleteRecurringEvent,
 } from "@/store/recurring-store";
+import { computeDebtEndDate } from "@/lib/debt-helpers";
 import { ok, fail, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
 
 /** Fecha en formato YYYY-MM-DD. */
@@ -90,7 +91,10 @@ export function registerRecurringTools(server: McpServer): void {
     "actualizar_recurrente",
     "Actualiza campos de un evento recurrente existente (recurring_events) por su id. " +
       "Solo se modifican los campos enviados; el resto se conserva. Permite editar " +
-      "las fechas de inicio/fin del recurrente.",
+      "las fechas de inicio/fin del recurrente. Para deudas (category='deuda') admite " +
+      "los campos totalAmount/principalAmount/interestRate/installmentsCount; si se " +
+      "cambia startDate o installmentsCount se recalcula automáticamente la end_date " +
+      "(inicio + (cuotas − 1) meses en el día del mes).",
     {
       id: z.string().uuid().describe("ID (uuid) del evento recurrente a actualizar"),
       name: z.string().optional().describe("Nuevo nombre"),
@@ -106,7 +110,7 @@ export function registerRecurringTools(server: McpServer): void {
         .number()
         .positive()
         .optional()
-        .describe("Nuevo monto mensual por defecto"),
+        .describe("Nuevo monto mensual por defecto (para deudas, la cuota mensual)"),
       isActive: z.boolean().optional().describe("Activar/desactivar el recurrente"),
       userId: zUserId.optional().describe("Nuevo responsable"),
       startDate: zDateOrEmpty
@@ -117,8 +121,29 @@ export function registerRecurringTools(server: McpServer): void {
       endDate: zDateOrEmpty
         .optional()
         .describe(
-          "Fecha de fin YYYY-MM-DD (cadena vacía para limpiarla; si no hay fin es indefinido)"
+          "Fecha de fin YYYY-MM-DD (cadena vacía para limpiarla; si no hay fin es indefinido). " +
+            "En deudas se recalcula automáticamente al cambiar startDate o installmentsCount."
         ),
+      totalAmount: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Deuda: total a pagar (capital + intereses)"),
+      principalAmount: z
+        .number()
+        .positive()
+        .optional()
+        .describe("Deuda: capital prestado (sin intereses)"),
+      interestRate: z
+        .number()
+        .optional()
+        .describe("Deuda: % de interés"),
+      installmentsCount: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .describe("Deuda: número de cuotas"),
     },
     async ({
       id,
@@ -130,6 +155,10 @@ export function registerRecurringTools(server: McpServer): void {
       userId,
       startDate,
       endDate,
+      totalAmount,
+      principalAmount,
+      interestRate,
+      installmentsCount,
     }) => {
       return guard(async () => {
         if (startDate && endDate && endDate < startDate) {
@@ -137,6 +166,34 @@ export function registerRecurringTools(server: McpServer): void {
             "La fecha de fin no puede ser anterior a la fecha de inicio."
           );
         }
+
+        const existing = (await fetchRecurringEvents()).find((e) => e.id === id);
+        if (!existing) return fail(`No existe un recurrente con id ${id}.`);
+
+        const isDebt = (category ?? existing.category) === "deuda";
+
+        // En deudas, si cambia startDate o installmentsCount recalculamos end_date.
+        let resolvedEndDate = endDate;
+        if (
+          isDebt &&
+          endDate === undefined &&
+          (startDate !== undefined || installmentsCount !== undefined)
+        ) {
+          const effDay = dayOfMonth ?? existing.dayOfMonth;
+          const effInstallments =
+            installmentsCount ?? existing.installmentsCount ?? 0;
+          const effStart =
+            startDate === undefined
+              ? existing.startDate
+              : startDate || undefined;
+          const computed = computeDebtEndDate(
+            effDay,
+            effInstallments,
+            effStart
+          );
+          if (computed) resolvedEndDate = computed;
+        }
+
         const event = await updateRecurringEvent(id, {
           ...(name !== undefined && { name }),
           ...(category !== undefined && { category }),
@@ -145,7 +202,11 @@ export function registerRecurringTools(server: McpServer): void {
           ...(isActive !== undefined && { isActive }),
           ...(userId !== undefined && { userId }),
           ...(startDate !== undefined && { startDate }),
-          ...(endDate !== undefined && { endDate }),
+          ...(resolvedEndDate !== undefined && { endDate: resolvedEndDate }),
+          ...(totalAmount !== undefined && { totalAmount }),
+          ...(principalAmount !== undefined && { principalAmount }),
+          ...(interestRate !== undefined && { interestRate }),
+          ...(installmentsCount !== undefined && { installmentsCount }),
         });
         return ok(event);
       });

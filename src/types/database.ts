@@ -136,9 +136,13 @@ export type Database = {
           default_amount: number
           end_date: string | null
           id: string
+          installments_count: number | null
+          interest_rate: number | null
           is_active: boolean
           name: string
+          principal_amount: number | null
           start_date: string | null
+          total_amount: number | null
           user_id: Database["public"]["Enums"]["user_id"]
         }
         Insert: {
@@ -148,9 +152,13 @@ export type Database = {
           default_amount: number
           end_date?: string | null
           id?: string
+          installments_count?: number | null
+          interest_rate?: number | null
           is_active?: boolean
           name: string
+          principal_amount?: number | null
           start_date?: string | null
+          total_amount?: number | null
           user_id: Database["public"]["Enums"]["user_id"]
         }
         Update: {
@@ -160,9 +168,13 @@ export type Database = {
           default_amount?: number
           end_date?: string | null
           id?: string
+          installments_count?: number | null
+          interest_rate?: number | null
           is_active?: boolean
           name?: string
+          principal_amount?: number | null
           start_date?: string | null
+          total_amount?: number | null
           user_id?: Database["public"]["Enums"]["user_id"]
         }
         Relationships: []
