@@ -43,3 +43,7 @@ next-env.d.ts
 
 .mcp.json
 .env.local
+
+# playwright-cli runtime artifacts (logs, snapshots) — keep the config, drop the noise
+/.playwright-cli/
+/.playwright/output/
