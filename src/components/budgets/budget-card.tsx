@@ -60,7 +60,7 @@ export function BudgetCard({ budget, spent, onEdit }: BudgetCardProps) {
           </span>
           <button
             onClick={() => onEdit(budget.category)}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-foreground/30 transition-colors hover:bg-accent hover:text-foreground"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-foreground/30 transition-colors hover:bg-accent hover:text-foreground"
           >
             <Pencil className="h-4 w-4" strokeWidth={1.5} />
           </button>

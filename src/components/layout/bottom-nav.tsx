@@ -29,7 +29,7 @@ export function BottomNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "relative flex items-center justify-center gap-2 rounded-xl py-2 transition-all duration-300 ease-out active:scale-95",
+                  "relative flex min-h-11 items-center justify-center gap-2 rounded-xl py-2.5 transition-all duration-300 ease-out active:scale-95",
                   isActive
                     ? "bg-primary px-4 text-primary-foreground shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
                     : "px-3 text-muted-foreground/60 hover:text-muted-foreground"
