@@ -32,7 +32,7 @@ export function RecurringCard({ event }: RecurringCardProps) {
         <UserAvatar userId={event.userId} />
         <div className="flex-1 min-w-0">
           <p className="truncate text-sm font-semibold">{event.name}</p>
-          <div className="mt-1.5 flex items-center gap-2">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             <CategoryBadge category={event.category} />
             {event.category !== "deuda" && (
               <span
@@ -51,7 +51,7 @@ export function RecurringCard({ event }: RecurringCardProps) {
           </div>
         </div>
         <p
-          className={`text-sm font-bold tabular-nums font-mono ${
+          className={`shrink-0 text-sm font-bold tabular-nums font-mono ${
             event.type === "ingreso" ? "text-emerald-600" : ""
           }`}
         >
