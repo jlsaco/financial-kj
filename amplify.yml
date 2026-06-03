@@ -11,7 +11,7 @@ frontend:
         # NEXT_PUBLIC_) se leen con process.env en runtime, así que las
         # escribimos en .env.production para que Next.js las cargue al arrancar
         # el servidor. `|| true` evita que el build falle si alguna no existe.
-        - env | grep -e '^GITHUB_TOKEN=' -e '^GITHUB_OWNER=' -e '^GITHUB_REPO=' >> .env.production || true
+        - env | grep -e '^GITHUB_TOKEN=' -e '^GITHUB_OWNER=' -e '^GITHUB_REPO=' -e '^MCP_AUTH_TOKEN=' >> .env.production || true
         - npm run build
   artifacts:
     baseDirectory: .next

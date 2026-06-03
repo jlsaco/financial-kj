@@ -1,0 +1,54 @@
+import { createMcpHandler } from "mcp-handler";
+import { registerAllTools } from "@/lib/mcp/registry";
+
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
+/**
+ * MCP server de FinanceKJ (transporte Streamable HTTP).
+ *
+ * URL del endpoint:  /api/mcp
+ * Auth: header `Authorization: Bearer <MCP_AUTH_TOKEN>` (secreto compartido,
+ *       mismo valor en Amplify y en la config del MCP del cliente).
+ *
+ * El handler corre en modo stateless (sin Redis/SSE persistente), apto para
+ * el runtime Lambda de Amplify.
+ */
+const mcpHandler = createMcpHandler(
+  (server) => {
+    registerAllTools(server);
+  },
+  {
+    instructions:
+      "MCP de FinanceKJ. Gestiona finanzas personales: gastos e ingresos " +
+      "(finance_records), gastos recurrentes (recurring_events / month_payment_configs), " +
+      "deudas (registros con category='deuda') y presupuestos. Categorías válidas: " +
+      "movilidad, alimentacion-salud, hogar-entretenimiento, deuda, servicios. " +
+      "Usuarios: jose, karen, bot-correos.",
+  },
+  {
+    basePath: "/api",
+    maxDuration: 60,
+  }
+);
+
+function unauthorized(): Response {
+  return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    status: 401,
+    headers: { "content-type": "application/json" },
+  });
+}
+
+function withAuth(handler: (req: Request) => Promise<Response>) {
+  return async (req: Request): Promise<Response> => {
+    const expected = process.env.MCP_AUTH_TOKEN;
+    if (!expected) return unauthorized();
+    const header = req.headers.get("authorization");
+    if (header !== `Bearer ${expected}`) return unauthorized();
+    return handler(req);
+  };
+}
+
+const handler = withAuth(mcpHandler);
+
+export { handler as GET, handler as POST, handler as DELETE };
