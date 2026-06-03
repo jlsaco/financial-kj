@@ -42,7 +42,11 @@ export function RecurringCard({ event }: RecurringCardProps) {
         <p className="text-sm font-bold tabular-nums font-mono">
           {formatCurrency(event.defaultAmount)}
         </p>
-        <div onClick={toggleActive}>
+        <div
+          className="flex size-11 shrink-0 items-center justify-center"
+          onClick={toggleActive}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <Switch checked={event.isActive} />
         </div>
         <ChevronRight className="h-4 w-4 text-foreground/25" strokeWidth={1.5} />
