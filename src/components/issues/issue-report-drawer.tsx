@@ -80,18 +80,18 @@ export function IssueReportDrawer({
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <div className="mx-auto w-full max-w-lg">
+        <div className="mx-auto flex min-h-0 w-full max-w-lg flex-1 flex-col">
           <DrawerHeader>
             <DrawerTitle>Reportar</DrawerTitle>
           </DrawerHeader>
 
-          <div className="space-y-5 px-4">
+          <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-2">
             {/* Kind selector */}
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setKind("bug")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
+                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
                   kind === "bug"
                     ? "bg-rose-500 text-white shadow-[0_2px_8px_rgba(244,63,94,0.3)]"
                     : "border border-border/60 text-muted-foreground hover:border-rose-200 hover:text-rose-600"
@@ -103,7 +103,7 @@ export function IssueReportDrawer({
               <button
                 type="button"
                 onClick={() => setKind("mejora")}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
+                className={`flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-[13px] font-semibold tracking-wide transition-all active:scale-[0.98] ${
                   kind === "mejora"
                     ? "bg-sky-600 text-white shadow-[0_2px_8px_rgba(2,132,199,0.3)]"
                     : "border border-border/60 text-muted-foreground hover:border-sky-200 hover:text-sky-600"
@@ -131,6 +131,7 @@ export function IssueReportDrawer({
                 }
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                className="h-11"
               />
             </div>
 
