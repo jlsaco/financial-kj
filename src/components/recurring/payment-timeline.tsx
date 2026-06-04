@@ -49,13 +49,17 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
   const currentMonth = today.getMonth() + 1;
   const currentYear = today.getFullYear();
 
-  // Ventana natural de 12 meses: 3 atrás + actual + 8 adelante.
+  // Ventana natural para recurrentes SIN fechas: 3 atrás + actual + 8 adelante.
   const WINDOW_PAST = -3;
   const WINDOW_FUTURE = 8;
   const naturalLower = addMonths(currentMonth, currentYear, WINDOW_PAST);
   const naturalUpper = addMonths(currentMonth, currentYear, WINDOW_FUTURE);
 
-  // Índice ordinal de un mes (año*12+mes) para comparar/intersectar rangos.
+  // Tope de seguridad para no generar listas gigantes en recurrentes con
+  // rangos absurdos. 50 años de cuotas cubre cualquier crédito real.
+  const MAX_MONTHS = 600;
+
+  // Índice ordinal de un mes (año*12+mes) para comparar rangos.
   const monthIndex = (m: number, y: number) => y * 12 + (m - 1);
 
   // Inicio efectivo del recurrente. Si NO hay startDate asumimos el límite
@@ -67,8 +71,9 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
         return { month: d.getMonth() + 1, year: d.getFullYear() };
       })()
     : naturalLower;
-  // Fin efectivo. Si NO hay endDate asumimos el límite superior natural
-  // (indefinido), por lo que se comporta como antes.
+  // Fin efectivo. Si HAY endDate mostramos TODAS las cuotas hasta esa fecha,
+  // por lejana que sea (issue #51): no se trunca artificialmente. Si NO hay
+  // endDate el recurrente es indefinido y usamos el límite superior natural.
   const effectiveEnd = event.endDate
     ? (() => {
         const d = new Date(event.endDate + "T12:00:00");
@@ -79,12 +84,18 @@ export function PaymentTimeline({ event }: PaymentTimelineProps) {
   const startIdx = monthIndex(effectiveStart.month, effectiveStart.year);
   const endIdx = monthIndex(effectiveEnd.month, effectiveEnd.year);
 
-  // Generamos la ventana de 12 meses e intersectamos con [effectiveStart, effectiveEnd].
+  // Generamos un mes por cada posición del rango [effectiveStart, effectiveEnd]
+  // completo, mes a mes. Así un crédito con fin en 2029 muestra todas sus
+  // cuotas, no solo las de los próximos meses. El MAX_MONTHS es un tope de
+  // seguridad para rangos degenerados.
   const months: { month: number; year: number }[] = [];
-  for (let offset = WINDOW_PAST; offset <= WINDOW_FUTURE; offset++) {
-    const { month: m, year: y } = addMonths(currentMonth, currentYear, offset);
-    const idx = monthIndex(m, y);
-    if (idx < startIdx || idx > endIdx) continue;
+  for (
+    let idx = startIdx;
+    idx <= endIdx && months.length < MAX_MONTHS;
+    idx++
+  ) {
+    const y = Math.floor(idx / 12);
+    const m = (idx % 12) + 1;
     months.push({ month: m, year: y });
   }
 
