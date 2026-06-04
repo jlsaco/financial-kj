@@ -18,6 +18,51 @@ export function getEffectiveDayOfMonth(
   return Math.min(dayOfMonth, getDaysInMonth(month, year));
 }
 
+/** Índice mensual comparable (año*12 + mes-1) para ordenar/comparar meses. */
+function monthIndex(month: number, year: number): number {
+  return year * 12 + (month - 1);
+}
+
+/**
+ * Mes/año de la PRIMERA cuota de un recurrente a partir de su `startDate`
+ * (YYYY-MM-DD). Si no hay `startDate`, devuelve null: se considera vigente
+ * desde siempre (no acota meses anteriores).
+ */
+function getStartMonthYear(
+  startDate: string | undefined
+): { month: number; year: number } | null {
+  if (!startDate) return null;
+  const [y, m] = startDate.split("-").map(Number);
+  if (!y || !m) return null;
+  return { month: m, year: y };
+}
+
+/**
+ * Resuelve la fecha de vencimiento efectiva de un recurrente para el mes de
+ * referencia, teniendo en cuenta su `startDate` (mes de la primera cuota):
+ * - Si el mes de referencia es ANTERIOR al mes de inicio, NO hay cuota ese mes;
+ *   se devuelve la fecha de la primera cuota (en el mes de inicio) para que el
+ *   recurrente se trate como "próximo" y nunca como "vencido".
+ * - En caso contrario, se usa el vencimiento del propio mes de referencia.
+ */
+function resolveDueDate(
+  event: RecurringEvent,
+  refMonth: number,
+  refYear: number
+): Date {
+  const start = getStartMonthYear(event.startDate);
+  let month = refMonth;
+  let year = refYear;
+  if (start && monthIndex(start.month, start.year) > monthIndex(refMonth, refYear)) {
+    month = start.month;
+    year = start.year;
+  }
+  const day = getEffectiveDayOfMonth(event.dayOfMonth, month, year);
+  const due = new Date(year, month - 1, day);
+  due.setHours(0, 0, 0, 0);
+  return due;
+}
+
 export function getUpcomingRecurringEvents(
   events: RecurringEvent[],
   configs: MonthPaymentConfig[],
@@ -34,13 +79,9 @@ export function getUpcomingRecurringEvents(
     const currentMonth = today.getMonth() + 1;
     const currentYear = today.getFullYear();
 
-    const effectiveDay = getEffectiveDayOfMonth(
-      event.dayOfMonth,
-      currentMonth,
-      currentYear
-    );
-    let dueDate = new Date(currentYear, currentMonth - 1, effectiveDay);
-    dueDate.setHours(0, 0, 0, 0);
+    // Vencimiento del mes en curso, salvo que la primera cuota (startDate) sea
+    // posterior: en ese caso apunta a la primera cuota y nunca cuenta vencido.
+    let dueDate = resolveDueDate(event, currentMonth, currentYear);
 
     // ¿Ya está pagado este mes? Lo usamos para decidir si un recurrente vencido
     // se mantiene resaltado (sin pagar) o se adelanta al próximo mes (ya pagado).
@@ -123,9 +164,10 @@ export function classifyRecurringEvents(
   for (const event of events) {
     if (!event.isActive) continue;
 
-    const effectiveDay = getEffectiveDayOfMonth(event.dayOfMonth, month, year);
-    const dueDate = new Date(year, month - 1, effectiveDay);
-    dueDate.setHours(0, 0, 0, 0);
+    // Si la primera cuota (startDate) aún no llega, el vencimiento apunta a ese
+    // mes futuro; así el recurrente cae en "próximos" y nunca en "vencidos"
+    // (no había cuota que pagar este mes).
+    const dueDate = resolveDueDate(event, month, year);
 
     const config = configs.find(
       (c) =>
