@@ -7,6 +7,7 @@ function toTarjeta(row: {
   owner: string;
   closing_day: number | null;
   categories: string[] | null;
+  cuenta_pago_id?: string | null;
   is_active: boolean;
   created_at: string;
 }): Tarjeta {
@@ -16,6 +17,7 @@ function toTarjeta(row: {
     owner: row.owner as Tarjeta["owner"],
     closingDay: row.closing_day ?? undefined,
     categories: (row.categories as Tarjeta["categories"]) ?? undefined,
+    cuentaPagoId: row.cuenta_pago_id ?? undefined,
     isActive: row.is_active,
     createdAt: row.created_at,
   };
@@ -30,6 +32,7 @@ function toLiquidacion(row: {
   is_paid: boolean;
   paid_date: string | null;
   note: string | null;
+  cuenta_id?: string | null;
   created_at: string;
 }): Liquidacion {
   return {
@@ -41,6 +44,7 @@ function toLiquidacion(row: {
     isPaid: row.is_paid,
     paidDate: row.paid_date ?? undefined,
     note: row.note ?? undefined,
+    cuentaId: row.cuenta_id ?? undefined,
     createdAt: row.created_at,
   };
 }
@@ -68,6 +72,7 @@ export async function insertTarjeta(
       owner: tarjeta.owner,
       closing_day: tarjeta.closingDay ?? null,
       categories: tarjeta.categories ?? null,
+      cuenta_pago_id: tarjeta.cuentaPagoId ?? null,
       is_active: tarjeta.isActive ?? true,
     })
     .select()
@@ -87,6 +92,8 @@ export async function updateTarjeta(
     dbUpdates.closing_day = updates.closingDay ?? null;
   if (updates.categories !== undefined)
     dbUpdates.categories = updates.categories ?? null;
+  if ("cuentaPagoId" in updates)
+    dbUpdates.cuenta_pago_id = updates.cuentaPagoId ?? null;
   if (updates.isActive !== undefined) dbUpdates.is_active = updates.isActive;
 
   const { data, error } = await supabase
@@ -134,6 +141,7 @@ export async function upsertLiquidacion(
         is_paid: liq.isPaid,
         paid_date: liq.paidDate ?? null,
         note: liq.note ?? null,
+        cuenta_id: liq.cuentaId ?? null,
       },
       { onConflict: "tarjeta_id,month,year" }
     )

@@ -51,6 +51,8 @@ export interface FinanceRecord {
   compraDiferidaId?: string;
   /** Número de cuota (1..N) dentro de la compra diferida. */
   installmentNo?: number;
+  /** Cuenta afectada: ingresos (entra) y gastos de débito/efectivo (sale). */
+  cuentaId?: string;
 }
 
 export interface RecurringEvent {
@@ -136,6 +138,29 @@ export interface Tarjeta {
   categories?: Category[];
   isActive: boolean;
   createdAt: string;
+  /** Cuenta desde la que se paga el estado de cuenta de esta tarjeta. */
+  cuentaPagoId?: string;
+}
+
+/** Cuenta bancaria / efectivo. */
+export interface Cuenta {
+  id: string;
+  name: string;
+  owner: UserId;
+  /** Saldo inicial (punto de partida del cálculo). */
+  initialBalance: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/** Saldo calculado de una cuenta (UI/MCP). */
+export interface CuentaSaldo {
+  cuenta: Cuenta;
+  /** Saldo actual = inicial + ingresos − gastos débito/efectivo − liquidaciones. */
+  balance: number;
+  totalIngresos: number;
+  totalGastos: number;
+  totalLiquidaciones: number;
 }
 
 /**
@@ -152,6 +177,8 @@ export interface Liquidacion {
   paidDate?: string;
   note?: string;
   createdAt: string;
+  /** Cuenta desde la que se pagó (resta del saldo). */
+  cuentaId?: string;
 }
 
 /**

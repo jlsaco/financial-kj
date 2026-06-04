@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Car, HeartPulse, Home, CreditCard, Wifi, Trash2, Archive, RotateCcw } from "lucide-react";
+import { Car, HeartPulse, Home, CreditCard, Wifi, Trash2, Archive, RotateCcw, Wallet } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useFinance } from "@/contexts/finance-context";
@@ -32,7 +32,7 @@ export function CardFormDrawer({
   onOpenChange,
   editTarjeta,
 }: CardFormDrawerProps) {
-  const { addTarjeta, updateTarjeta, deleteTarjeta } = useFinance();
+  const { addTarjeta, updateTarjeta, deleteTarjeta, state } = useFinance();
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -40,6 +40,9 @@ export function CardFormDrawer({
   const [owner, setOwner] = useState<UserId>("jose");
   const [closingDay, setClosingDay] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [cuentaPagoId, setCuentaPagoId] = useState<string | undefined>(undefined);
+
+  const cuentas = state.cuentas.filter((c) => c.isActive);
 
   useEffect(() => {
     if (editTarjeta) {
@@ -47,11 +50,13 @@ export function CardFormDrawer({
       setOwner(editTarjeta.owner);
       setClosingDay(editTarjeta.closingDay?.toString() ?? "");
       setCategories(editTarjeta.categories ?? []);
+      setCuentaPagoId(editTarjeta.cuentaPagoId);
     } else {
       setName("");
       setOwner("jose");
       setClosingDay("");
       setCategories([]);
+      setCuentaPagoId(undefined);
     }
   }, [editTarjeta, open]);
 
@@ -82,6 +87,7 @@ export function CardFormDrawer({
         owner,
         closingDay: parsedDay,
         categories: categories.length > 0 ? categories : undefined,
+        cuentaPagoId,
       };
       if (editTarjeta) {
         await updateTarjeta(editTarjeta.id, payload);
@@ -198,6 +204,43 @@ export function CardFormDrawer({
                 })}
               </div>
             </div>
+
+            {/* Cuenta de pago */}
+            {cuentas.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                  Se paga desde (opcional)
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCuentaPagoId(undefined)}
+                    className={`rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                      cuentaPagoId === undefined
+                        ? "bg-foreground text-background shadow-sm"
+                        : "border border-border/60 text-muted-foreground hover:border-border"
+                    }`}
+                  >
+                    Sin definir
+                  </button>
+                  {cuentas.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCuentaPagoId(c.id)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                        cuentaPagoId === c.id
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "border border-border/60 text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      <Wallet className="h-4 w-4" strokeWidth={1.5} />
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <DrawerFooter>

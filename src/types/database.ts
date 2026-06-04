@@ -79,12 +79,40 @@ export type Database = {
           },
         ]
       }
+      cuentas: {
+        Row: {
+          created_at: string
+          id: string
+          initial_balance: number
+          is_active: boolean
+          name: string
+          owner: Database["public"]["Enums"]["user_id"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          is_active?: boolean
+          name: string
+          owner: Database["public"]["Enums"]["user_id"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          initial_balance?: number
+          is_active?: boolean
+          name?: string
+          owner?: Database["public"]["Enums"]["user_id"]
+        }
+        Relationships: []
+      }
       finance_records: {
         Row: {
           amount: number
           category: Database["public"]["Enums"]["category"]
           compra_diferida_id: string | null
           created_at: string
+          cuenta_id: string | null
           date: string
           id: string
           installment_no: number | null
@@ -100,6 +128,7 @@ export type Database = {
           category: Database["public"]["Enums"]["category"]
           compra_diferida_id?: string | null
           created_at?: string
+          cuenta_id?: string | null
           date: string
           id?: string
           installment_no?: number | null
@@ -115,6 +144,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["category"]
           compra_diferida_id?: string | null
           created_at?: string
+          cuenta_id?: string | null
           date?: string
           id?: string
           installment_no?: number | null
@@ -131,6 +161,13 @@ export type Database = {
             columns: ["compra_diferida_id"]
             isOneToOne: false
             referencedRelation: "compras_diferidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_records_cuenta_id_fkey"
+            columns: ["cuenta_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas"
             referencedColumns: ["id"]
           },
           {
@@ -153,6 +190,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          cuenta_id: string | null
           id: string
           is_paid: boolean
           month: number
@@ -164,6 +202,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          cuenta_id?: string | null
           id?: string
           is_paid?: boolean
           month: number
@@ -175,6 +214,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          cuenta_id?: string | null
           id?: string
           is_paid?: boolean
           month?: number
@@ -184,6 +224,13 @@ export type Database = {
           year?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "liquidaciones_cuenta_id_fkey"
+            columns: ["cuenta_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "liquidaciones_tarjeta_id_fkey"
             columns: ["tarjeta_id"]
@@ -303,6 +350,7 @@ export type Database = {
           categories: Database["public"]["Enums"]["category"][] | null
           closing_day: number | null
           created_at: string
+          cuenta_pago_id: string | null
           id: string
           is_active: boolean
           name: string
@@ -312,6 +360,7 @@ export type Database = {
           categories?: Database["public"]["Enums"]["category"][] | null
           closing_day?: number | null
           created_at?: string
+          cuenta_pago_id?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -321,12 +370,21 @@ export type Database = {
           categories?: Database["public"]["Enums"]["category"][] | null
           closing_day?: number | null
           created_at?: string
+          cuenta_pago_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
           owner?: Database["public"]["Enums"]["user_id"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tarjetas_cuenta_pago_id_fkey"
+            columns: ["cuenta_pago_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

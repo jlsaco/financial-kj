@@ -35,6 +35,8 @@ export function TarjetaCard({ status, onEdit }: TarjetaCardProps) {
           amount: owed,
           isPaid: true,
           paidDate: today,
+          // Resta del saldo de la cuenta de pago de la tarjeta (si tiene).
+          cuentaId: tarjeta.cuentaPagoId,
         });
         toast.success("Liquidación registrada");
       }

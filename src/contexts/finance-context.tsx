@@ -19,14 +19,18 @@ import {
   Liquidacion,
   TarjetaMonthStatus,
   CompraDiferida,
+  Cuenta,
+  CuentaSaldo,
 } from "@/types";
 import * as recordsStore from "@/store/records-store";
 import * as recurringStore from "@/store/recurring-store";
 import * as budgetsStore from "@/store/budgets-store";
 import * as cardsStore from "@/store/cards-store";
 import * as comprasStore from "@/store/compras-store";
+import * as cuentasStore from "@/store/cuentas-store";
 import { getUpcomingRecurringEvents } from "@/lib/date-helpers";
 import { getTarjetasMonthStatus } from "@/lib/card-helpers";
+import { computeCuentasSaldos } from "@/lib/account-helpers";
 import { CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
@@ -38,6 +42,7 @@ interface FinanceState {
   tarjetas: Tarjeta[];
   liquidaciones: Liquidacion[];
   comprasDiferidas: CompraDiferida[];
+  cuentas: Cuenta[];
   isLoaded: boolean;
 }
 
@@ -58,7 +63,10 @@ type FinanceAction =
   | { type: "DELETE_LIQUIDACION"; payload: { tarjetaId: string; month: number; year: number } }
   | { type: "SET_RECORDS"; payload: FinanceRecord[] }
   | { type: "ADD_COMPRA"; payload: CompraDiferida }
-  | { type: "DELETE_COMPRA"; payload: string };
+  | { type: "DELETE_COMPRA"; payload: string }
+  | { type: "ADD_CUENTA"; payload: Cuenta }
+  | { type: "UPDATE_CUENTA"; payload: Cuenta }
+  | { type: "DELETE_CUENTA"; payload: string };
 
 const initialState: FinanceState = {
   records: [],
@@ -68,6 +76,7 @@ const initialState: FinanceState = {
   tarjetas: [],
   liquidaciones: [],
   comprasDiferidas: [],
+  cuentas: [],
   isLoaded: false,
 };
 
@@ -220,6 +229,36 @@ function financeReducer(
         ),
       };
 
+    case "ADD_CUENTA":
+      return { ...state, cuentas: [...state.cuentas, action.payload] };
+
+    case "UPDATE_CUENTA":
+      return {
+        ...state,
+        cuentas: state.cuentas.map((c) =>
+          c.id === action.payload.id ? action.payload : c
+        ),
+      };
+
+    case "DELETE_CUENTA":
+      // En BD las referencias (records.cuenta_id, liquidaciones.cuenta_id,
+      // tarjetas.cuenta_pago_id) pasan a NULL. Reflejamos lo mismo en memoria.
+      return {
+        ...state,
+        cuentas: state.cuentas.filter((c) => c.id !== action.payload),
+        records: state.records.map((r) =>
+          r.cuentaId === action.payload ? { ...r, cuentaId: undefined } : r
+        ),
+        liquidaciones: state.liquidaciones.map((l) =>
+          l.cuentaId === action.payload ? { ...l, cuentaId: undefined } : l
+        ),
+        tarjetas: state.tarjetas.map((t) =>
+          t.cuentaPagoId === action.payload
+            ? { ...t, cuentaPagoId: undefined }
+            : t
+        ),
+      };
+
     default:
       return state;
   }
@@ -266,6 +305,13 @@ interface FinanceContextValue {
   ) => Promise<void>;
   /** Borra una compra diferida y sus cuotas. */
   deleteCompraDiferida: (id: string) => Promise<void>;
+  addCuenta: (
+    data: Omit<Cuenta, "id" | "createdAt" | "isActive"> & { isActive?: boolean }
+  ) => Promise<Cuenta>;
+  updateCuenta: (id: string, updates: Partial<Cuenta>) => Promise<void>;
+  deleteCuenta: (id: string) => Promise<void>;
+  /** Saldo calculado de todas las cuentas. */
+  getCuentasSaldos: () => CuentaSaldo[];
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -283,6 +329,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         tarjetas,
         liquidaciones,
         comprasDiferidas,
+        cuentas,
       ] = await Promise.all([
         recordsStore.fetchRecords(),
         recurringStore.fetchRecurringEvents(),
@@ -291,6 +338,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         cardsStore.fetchTarjetas(),
         cardsStore.fetchLiquidaciones(),
         comprasStore.fetchComprasDiferidas(),
+        cuentasStore.fetchCuentas(),
       ]);
       dispatch({
         type: "INIT",
@@ -302,6 +350,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           tarjetas,
           liquidaciones,
           comprasDiferidas,
+          cuentas,
         },
       });
     }
@@ -473,6 +522,38 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "DELETE_COMPRA", payload: id });
   }, []);
 
+  const addCuenta = useCallback(
+    async (
+      data: Omit<Cuenta, "id" | "createdAt" | "isActive"> & {
+        isActive?: boolean;
+      }
+    ) => {
+      const saved = await cuentasStore.insertCuenta(data);
+      dispatch({ type: "ADD_CUENTA", payload: saved });
+      return saved;
+    },
+    []
+  );
+
+  const updateCuenta = useCallback(
+    async (id: string, updates: Partial<Cuenta>) => {
+      const saved = await cuentasStore.updateCuenta(id, updates);
+      dispatch({ type: "UPDATE_CUENTA", payload: saved });
+    },
+    []
+  );
+
+  const deleteCuenta = useCallback(async (id: string) => {
+    await cuentasStore.deleteCuenta(id);
+    dispatch({ type: "DELETE_CUENTA", payload: id });
+  }, []);
+
+  const getCuentasSaldos = useCallback(
+    () =>
+      computeCuentasSaldos(state.cuentas, state.records, state.liquidaciones),
+    [state.cuentas, state.records, state.liquidaciones]
+  );
+
   return (
     <FinanceContext.Provider
       value={{
@@ -495,6 +576,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         getTarjetasStatus,
         addCompraDiferida,
         deleteCompraDiferida,
+        addCuenta,
+        updateCuenta,
+        deleteCuenta,
+        getCuentasSaldos,
       }}
     >
       {children}

@@ -13,6 +13,7 @@ function toRecord(row: {
   tarjeta_id: string | null;
   compra_diferida_id?: string | null;
   installment_no?: number | null;
+  cuenta_id?: string | null;
   created_at: string;
   updated_at: string;
 }): FinanceRecord {
@@ -30,6 +31,7 @@ function toRecord(row: {
     tarjetaId: row.tarjeta_id ?? undefined,
     compraDiferidaId: row.compra_diferida_id ?? undefined,
     installmentNo: row.installment_no ?? undefined,
+    cuentaId: row.cuenta_id ?? undefined,
   };
 }
 
@@ -56,6 +58,7 @@ export async function insertRecord(
       date: record.date,
       recurring_event_id: record.recurringEventId ?? null,
       tarjeta_id: record.tarjetaId ?? null,
+      cuenta_id: record.cuentaId ?? null,
     })
     .select()
     .single();
@@ -76,9 +79,11 @@ export async function updateRecord(
   if (updates.date !== undefined) dbUpdates.date = updates.date;
   if (updates.recurringEventId !== undefined)
     dbUpdates.recurring_event_id = updates.recurringEventId;
-  // Presencia de la clave (aunque sea undefined) = limpiar/asignar tarjeta.
+  // Presencia de la clave (aunque sea undefined) = limpiar/asignar.
   if ("tarjetaId" in updates)
     dbUpdates.tarjeta_id = updates.tarjetaId ?? null;
+  if ("cuentaId" in updates)
+    dbUpdates.cuenta_id = updates.cuentaId ?? null;
   dbUpdates.updated_at = new Date().toISOString();
 
   const { data, error } = await supabase

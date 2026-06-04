@@ -55,7 +55,16 @@ const mcpHandler = createMcpHandler(
       "cuota pesa solo en su mes (en el rubro y en la liquidación de la tarjeta). La " +
       "cuota = totalAmount ÷ installmentsCount. Usa listar_compras_diferidas y " +
       "resumen_compra_diferida para ver cuotas pagadas/restantes, saldo pendiente y " +
-      "próxima cuota, y borrar_compra_diferida para eliminarla con sus cuotas en cascada.",
+      "próxima cuota, y borrar_compra_diferida para eliminarla con sus cuotas en cascada. " +
+      "Cuentas (caja real): cuentas bancarias/efectivo con saldo. crear_cuenta, " +
+      "listar_cuentas (con saldo calculado), saldo_cuenta, actualizar_cuenta y " +
+      "borrar_cuenta. El saldo = saldo inicial + ingresos − gastos de débito/efectivo − " +
+      "liquidaciones de tarjeta pagadas desde la cuenta. Un ingreso entra a una cuenta " +
+      "con cuentaId (crear_ingreso); un gasto de débito/efectivo sale de la cuenta con " +
+      "cuentaId (crear_gasto sin tarjeta). Los gastos con tarjeta NO mueven la cuenta " +
+      "hasta que la tarjeta se liquida: liquidar_tarjeta_mes resta de la cuenta indicada " +
+      "(cuentaId) o, por defecto, de la cuenta de pago de la tarjeta (cuentaPagoId, " +
+      "configurable en crear_tarjeta/actualizar_tarjeta).",
   },
   {
     basePath: "/api",
