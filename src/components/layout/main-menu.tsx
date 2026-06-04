@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bug, ChevronRight, Wallet } from "lucide-react";
+import { Menu, Bug, ChevronRight, Wallet, Tag } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { USERS } from "@/lib/constants";
+import { APP_VERSION_LABEL } from "@/lib/version";
 import { cn } from "@/lib/utils";
 
 /**
@@ -137,6 +138,19 @@ export function MainMenu() {
             </div>
           ))}
         </nav>
+
+        <Link
+          href="/releases"
+          onClick={() => setOpen(false)}
+          aria-label={`Versión ${APP_VERSION_LABEL} — ver historial de versiones`}
+          className="mt-auto flex items-center gap-2 border-t border-border/40 px-5 py-3.5 text-foreground/45 transition-colors hover:text-foreground/70"
+        >
+          <Tag className="h-3.5 w-3.5" strokeWidth={1.8} />
+          <span className="text-xs font-medium tracking-wide">
+            {APP_VERSION_LABEL}
+          </span>
+          <ChevronRight className="ml-auto h-3.5 w-3.5" strokeWidth={2} />
+        </Link>
       </SheetContent>
     </Sheet>
   );
