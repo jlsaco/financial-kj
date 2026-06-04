@@ -6,9 +6,22 @@ import { Drawer as DrawerPrimitive } from "vaul"
 import { cn } from "@/lib/utils"
 
 function Drawer({
+  repositionInputs = false,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
-  return <DrawerPrimitive.Root data-slot="drawer" {...props} />
+  // Bug #41: cuando el teclado de iOS se abre, vaul (repositionInputs) encoge el
+  // drawer al alto visible; con un footer alto (varios botones apilados) el área
+  // del formulario se colapsa a ~0 y solo quedan visibles los botones. Al
+  // desactivarlo, el drawer mantiene su altura (max-h-[80vh]) anclado abajo y el
+  // teclado simplemente tapa el footer, dejando el formulario visible y
+  // desplazable. Se puede reactivar pasando repositionInputs en un caso puntual.
+  return (
+    <DrawerPrimitive.Root
+      data-slot="drawer"
+      repositionInputs={repositionInputs}
+      {...props}
+    />
+  )
 }
 
 function DrawerTrigger({
