@@ -28,8 +28,15 @@ export function registerRecordTools(server: McpServer): void {
         .describe(
           "ID de la tarjeta con la que se pagó (medio de pago). Omitir = débito/efectivo."
         ),
+      cuentaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "Cuenta de la que sale el dinero (solo gastos de débito/efectivo, sin tarjeta)."
+        ),
     },
-    async ({ name, amount, category, userId, date, tarjetaId }) => {
+    async ({ name, amount, category, userId, date, tarjetaId, cuentaId }) => {
       return guard(async () => {
         const record = await insertRecord({
           name,
@@ -39,6 +46,8 @@ export function registerRecordTools(server: McpServer): void {
           type: "gasto",
           date: date ?? today(),
           tarjetaId,
+          // Un gasto con tarjeta no mueve la cuenta hasta liquidar.
+          cuentaId: tarjetaId ? undefined : cuentaId,
         });
         return ok(record);
       });
@@ -47,7 +56,8 @@ export function registerRecordTools(server: McpServer): void {
 
   server.tool(
     "crear_ingreso",
-    "Registra un ingreso en finance_records.",
+    "Registra un ingreso en finance_records. Opcionalmente entra a una cuenta " +
+      "(cuentaId) para sumar a su saldo.",
     {
       name: z.string().describe("Descripción del ingreso, p.ej. 'Salario'"),
       amount: z.number().positive().describe("Monto en pesos (positivo)"),
@@ -58,8 +68,13 @@ export function registerRecordTools(server: McpServer): void {
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .optional()
         .describe("Fecha YYYY-MM-DD (por defecto hoy)"),
+      cuentaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Cuenta a la que entra el ingreso (suma al saldo)."),
     },
-    async ({ name, amount, category, userId, date }) => {
+    async ({ name, amount, category, userId, date, cuentaId }) => {
       return guard(async () => {
         const record = await insertRecord({
           name,
@@ -68,6 +83,7 @@ export function registerRecordTools(server: McpServer): void {
           userId,
           type: "ingreso",
           date: date ?? today(),
+          cuentaId,
         });
         return ok(record);
       });

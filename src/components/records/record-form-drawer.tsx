@@ -18,6 +18,7 @@ import {
   CreditCard,
   Wifi,
   Trash2,
+  Wallet,
 } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -52,13 +53,18 @@ export function RecordFormDrawer({
   const [userId, setUserId] = useState<UserId>("jose");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [tarjetaId, setTarjetaId] = useState<string | undefined>(undefined);
+  const [cuentaId, setCuentaId] = useState<string | undefined>(undefined);
   // Compra diferida en cuotas (solo al crear un gasto nuevo).
   const [deferred, setDeferred] = useState(false);
   const [installments, setInstallments] = useState("");
   const [interest, setInterest] = useState("");
 
   const tarjetas = state.tarjetas.filter((t) => t.isActive);
+  const cuentas = state.cuentas.filter((c) => c.isActive);
   const canDefer = type === "gasto" && !editRecord;
+  // La cuenta aplica a ingresos y a gastos de débito/efectivo (sin tarjeta).
+  const showCuenta =
+    !deferred && (type === "ingreso" || (type === "gasto" && !tarjetaId));
 
   useEffect(() => {
     if (editRecord) {
@@ -69,6 +75,7 @@ export function RecordFormDrawer({
       setUserId(editRecord.userId);
       setDate(editRecord.date);
       setTarjetaId(editRecord.tarjetaId);
+      setCuentaId(editRecord.cuentaId);
     } else {
       setName("");
       setAmount("");
@@ -77,6 +84,7 @@ export function RecordFormDrawer({
       setUserId("jose");
       setDate(new Date().toISOString().split("T")[0]);
       setTarjetaId(undefined);
+      setCuentaId(undefined);
     }
     setDeferred(false);
     setInstallments("");
@@ -136,6 +144,8 @@ export function RecordFormDrawer({
     try {
       // La tarjeta (medio de pago) solo aplica a gastos.
       const effTarjetaId = type === "gasto" ? tarjetaId : undefined;
+      // La cuenta aplica a ingresos y gastos de débito/efectivo (sin tarjeta).
+      const effCuentaId = showCuenta ? cuentaId : undefined;
       if (editRecord) {
         await updateRecord(editRecord.id, {
           name: name.trim(),
@@ -145,6 +155,7 @@ export function RecordFormDrawer({
           userId,
           date,
           tarjetaId: effTarjetaId,
+          cuentaId: effCuentaId,
         });
         toast.success("Registro actualizado");
       } else {
@@ -156,6 +167,7 @@ export function RecordFormDrawer({
           userId,
           date,
           tarjetaId: effTarjetaId,
+          cuentaId: effCuentaId,
         });
         toast.success("Registro creado");
       }
@@ -320,6 +332,43 @@ export function RecordFormDrawer({
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Cuenta — ingresos y gastos de débito/efectivo */}
+            {showCuenta && cuentas.length > 0 && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                  {type === "ingreso" ? "Entra a la cuenta" : "Sale de la cuenta"}
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCuentaId(undefined)}
+                    className={`rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                      cuentaId === undefined
+                        ? "bg-foreground text-background shadow-sm"
+                        : "border border-border/60 text-muted-foreground hover:border-border"
+                    }`}
+                  >
+                    Sin cuenta
+                  </button>
+                  {cuentas.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => setCuentaId(c.id)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                        cuentaId === c.id
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "border border-border/60 text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      <Wallet className="h-4 w-4" strokeWidth={1.5} />
+                      {c.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 

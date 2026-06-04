@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Bug, ChevronRight } from "lucide-react";
+import { Menu, Bug, ChevronRight, Wallet } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -29,6 +29,18 @@ const MENU_GROUPS: {
     iconClass: string;
   }[];
 }[] = [
+  {
+    label: "Mis finanzas",
+    items: [
+      {
+        href: "/cuentas",
+        icon: Wallet,
+        title: "Cuentas",
+        description: "Saldo real de tus cuentas",
+        iconClass: "bg-emerald-50 text-emerald-600",
+      },
+    ],
+  },
   {
     label: "Más opciones",
     items: [

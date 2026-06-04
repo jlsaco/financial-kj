@@ -45,14 +45,20 @@ export function registerCardTools(server: McpServer): void {
         .array(zCategory)
         .optional()
         .describe("Rubros asociados (informativo), p.ej. ['alimentacion-salud']"),
+      cuentaPagoId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe("Cuenta desde la que se paga el estado de cuenta de la tarjeta"),
     },
-    async ({ name, owner, closingDay, categories }) => {
+    async ({ name, owner, closingDay, categories, cuentaPagoId }) => {
       return guard(async () => {
         const tarjeta = await insertTarjeta({
           name,
           owner,
           closingDay,
           categories,
+          cuentaPagoId,
         });
         return ok(tarjeta);
       });
@@ -89,9 +95,10 @@ export function registerCardTools(server: McpServer): void {
       owner: zUserId.optional(),
       closingDay: z.number().int().min(1).max(31).nullable().optional(),
       categories: z.array(zCategory).nullable().optional(),
+      cuentaPagoId: z.string().uuid().nullable().optional(),
       isActive: z.boolean().optional(),
     },
-    async ({ id, name, owner, closingDay, categories, isActive }) => {
+    async ({ id, name, owner, closingDay, categories, cuentaPagoId, isActive }) => {
       return guard(async () => {
         const existing = (await fetchTarjetas()).find((t) => t.id === id);
         if (!existing) return fail(`No existe una tarjeta con id ${id}.`);
@@ -103,6 +110,9 @@ export function registerCardTools(server: McpServer): void {
           }),
           ...(categories !== undefined && {
             categories: categories ?? undefined,
+          }),
+          ...(cuentaPagoId !== undefined && {
+            cuentaPagoId: cuentaPagoId ?? undefined,
           }),
           ...(isActive !== undefined && { isActive }),
         });
@@ -208,9 +218,16 @@ export function registerCardTools(server: McpServer): void {
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .optional()
         .describe("Fecha de pago YYYY-MM-DD (por defecto hoy)"),
+      cuentaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "Cuenta desde la que se paga (resta del saldo). Por defecto la cuenta de pago de la tarjeta."
+        ),
       note: z.string().optional().describe("Nota opcional"),
     },
-    async ({ tarjetaId, month, year, pagado, amount, paidDate, note }) => {
+    async ({ tarjetaId, month, year, pagado, amount, paidDate, cuentaId, note }) => {
       return guard(async () => {
         const tarjeta = (await fetchTarjetas()).find((t) => t.id === tarjetaId);
         if (!tarjeta) return fail(`No existe una tarjeta con id ${tarjetaId}.`);
@@ -240,6 +257,7 @@ export function registerCardTools(server: McpServer): void {
           amount: resolvedAmount,
           isPaid: true,
           paidDate: paidDate ?? today(),
+          cuentaId: cuentaId ?? tarjeta.cuentaPagoId,
           note,
         });
         return ok(liquidacion);
