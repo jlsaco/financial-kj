@@ -76,22 +76,17 @@ a partir de los _conventional commits_ (`feat:`, `fix:`, `BREAKING CHANGE`).
   (Settings → Branches → _Allow specified actors to bypass_ / añadir la app
   **GitHub Actions**). Si no, el push del commit de release fallará.
 
-**Versión inicial (paso OBLIGATORIO antes del primer release)**
+**Versión inicial (ya sembrada)**
 
 semantic-release usa los **tags de git** como fuente de verdad, **no** el campo
-`version` de `package.json`. Hoy el repo no tiene tags, así que **el primer
-release saltaría a `v1.0.0`** (ignorando el `0.1.0` de `package.json`).
+`version` de `package.json`. El historial de versiones **ya está reconstruido**
+de forma retroactiva: existen los releases `v0.1.0` (MVP inicial) hasta
+**`v0.1.29`** (una versión por cada PR mergeado), y `package.json` arranca en
+`0.1.29` para coincidir.
 
-Decide antes del primer merge a `main`:
-
-- **Mantener `0.x`** (recomendado mientras la app madura): crea el tag base una
-  sola vez:
-  ```bash
-  git tag v0.1.0 && git push origin v0.1.0
-  ```
-  Luego el siguiente `feat:`/`fix:` → `0.1.1`; un `BREAKING CHANGE` → `0.2.0`.
-- **Arrancar en `1.0.0`**: no hagas nada; el primer `feat:`/`fix:` publicará
-  `v1.0.0` automáticamente.
+Por eso, en el primer push a `main` con un `feat:`/`fix:`, semantic-release tomará
+`v0.1.29` como base y publicará **`v0.1.30`** (no `v1.0.0`). No hay que crear
+ningún tag a mano.
 
 **Forzar un release**
 
