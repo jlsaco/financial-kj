@@ -83,6 +83,13 @@ export function registerDebtTools(server: McpServer): void {
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .optional()
         .describe("Fecha de inicio YYYY-MM-DD (opcional; por defecto el mes actual)"),
+      tarjetaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "Tarjeta a la que pertenece la deuda (F4): su cuota del mes entra en la liquidación de la tarjeta."
+        ),
       userId: zUserId,
     },
     async ({
@@ -94,6 +101,7 @@ export function registerDebtTools(server: McpServer): void {
       interestRate,
       defaultAmount,
       startDate,
+      tarjetaId,
       userId,
     }) => {
       return guard(async () => {
@@ -114,6 +122,7 @@ export function registerDebtTools(server: McpServer): void {
           principalAmount,
           interestRate,
           installmentsCount,
+          tarjetaId,
         });
         return ok(event);
       });

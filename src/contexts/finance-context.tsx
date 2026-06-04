@@ -500,10 +500,18 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         state.tarjetas,
         state.records,
         state.liquidaciones,
+        state.recurringEvents,
+        state.monthConfigs,
         month,
         year
       ),
-    [state.tarjetas, state.records, state.liquidaciones]
+    [
+      state.tarjetas,
+      state.records,
+      state.liquidaciones,
+      state.recurringEvents,
+      state.monthConfigs,
+    ]
   );
 
   const addCompraDiferida = useCallback(

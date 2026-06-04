@@ -71,6 +71,8 @@ export interface RecurringEvent {
   principalAmount?: number;
   interestRate?: number;
   installmentsCount?: number;
+  /** Tarjeta a la que pertenece (F4): su cuota del mes entra en la liquidación. */
+  tarjetaId?: string;
 }
 
 export interface MonthPaymentConfig {
@@ -189,10 +191,12 @@ export interface TarjetaMonthStatus {
   tarjeta: Tarjeta;
   month: number;
   year: number;
-  /** Suma de gastos pagados con esta tarjeta en el periodo. */
+  /** Total a liquidar: gastos del periodo + cuota de deudas vinculadas (F4). */
   owed: number;
   /** Nº de gastos del periodo. */
   recordsCount: number;
+  /** Parte de `owed` que proviene de cuotas de deudas vinculadas (F4). */
+  debtCuota: number;
   /** Liquidación registrada para el periodo (si existe). */
   liquidacion: Liquidacion | null;
   /** true si hay liquidación con isPaid. */

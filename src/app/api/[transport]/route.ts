@@ -64,7 +64,13 @@ const mcpHandler = createMcpHandler(
       "cuentaId (crear_gasto sin tarjeta). Los gastos con tarjeta NO mueven la cuenta " +
       "hasta que la tarjeta se liquida: liquidar_tarjeta_mes resta de la cuenta indicada " +
       "(cuentaId) o, por defecto, de la cuenta de pago de la tarjeta (cuentaPagoId, " +
-      "configurable en crear_tarjeta/actualizar_tarjeta).",
+      "configurable en crear_tarjeta/actualizar_tarjeta). " +
+      "Deudas en tarjetas: una deuda recurrente (recurring_events category='deuda') " +
+      "puede asociarse a una tarjeta con tarjetaId (en crear_deuda_recurrente o " +
+      "actualizar_recurrente; null desvincula). La cuota del mes de las deudas " +
+      "vinculadas se suma a la liquidación de la tarjeta (estado_tarjetas la incluye en " +
+      "owed). Así una tarjeta de pura deuda muestra su cuota fija y una tarjeta mixta " +
+      "suma la cuota de la deuda vieja más las compras nuevas del mes.",
   },
   {
     basePath: "/api",

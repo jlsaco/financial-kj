@@ -305,6 +305,7 @@ export type Database = {
           name: string
           principal_amount: number | null
           start_date: string | null
+          tarjeta_id: string | null
           total_amount: number | null
           type: Database["public"]["Enums"]["record_type"]
           user_id: Database["public"]["Enums"]["user_id"]
@@ -322,6 +323,7 @@ export type Database = {
           name: string
           principal_amount?: number | null
           start_date?: string | null
+          tarjeta_id?: string | null
           total_amount?: number | null
           type?: Database["public"]["Enums"]["record_type"]
           user_id: Database["public"]["Enums"]["user_id"]
@@ -339,11 +341,20 @@ export type Database = {
           name?: string
           principal_amount?: number | null
           start_date?: string | null
+          tarjeta_id?: string | null
           total_amount?: number | null
           type?: Database["public"]["Enums"]["record_type"]
           user_id?: Database["public"]["Enums"]["user_id"]
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "recurring_events_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tarjetas: {
         Row: {
