@@ -92,9 +92,16 @@ function withAuth(handler: (req: Request) => Promise<Response>) {
   return async (req: Request): Promise<Response> => {
     const expected = process.env.MCP_AUTH_TOKEN;
     if (!expected) return unauthorized();
+    // Dos formas de autenticar con el mismo secreto:
+    // - header `Authorization: Bearer <token>` (clientes que permiten headers, p.ej. CLI)
+    // - query param `?k=<token>` (clientes que solo aceptan una URL, p.ej. el conector
+    //   personalizado de la app móvil de Claude, que no permite añadir headers)
     const header = req.headers.get("authorization");
-    if (header !== `Bearer ${expected}`) return unauthorized();
-    return handler(req);
+    const urlToken = new URL(req.url).searchParams.get("k");
+    if (header === `Bearer ${expected}` || urlToken === expected) {
+      return handler(req);
+    }
+    return unauthorized();
   };
 }
 
