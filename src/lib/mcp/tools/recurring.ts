@@ -213,6 +213,14 @@ export function registerRecurringTools(server: McpServer): void {
         .positive()
         .optional()
         .describe("Deuda: número de cuotas"),
+      tarjetaId: z
+        .string()
+        .uuid()
+        .nullable()
+        .optional()
+        .describe(
+          "Tarjeta a la que se asocia (F4); null para desvincular. Su cuota del mes entra en la liquidación de la tarjeta."
+        ),
     },
     async ({
       id,
@@ -229,6 +237,7 @@ export function registerRecurringTools(server: McpServer): void {
       principalAmount,
       interestRate,
       installmentsCount,
+      tarjetaId,
     }) => {
       return guard(async () => {
         if (startDate && endDate && endDate < startDate) {
@@ -289,6 +298,7 @@ export function registerRecurringTools(server: McpServer): void {
           ...(principalAmount !== undefined && { principalAmount }),
           ...(interestRate !== undefined && { interestRate }),
           ...(installmentsCount !== undefined && { installmentsCount }),
+          ...(tarjetaId !== undefined && { tarjetaId: tarjetaId ?? undefined }),
         });
         return ok(event);
       });

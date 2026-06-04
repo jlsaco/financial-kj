@@ -39,7 +39,7 @@ export function RecurringFormDrawer({
   onOpenChange,
   editEvent,
 }: RecurringFormDrawerProps) {
-  const { addRecurringEvent, updateRecurringEvent } = useFinance();
+  const { addRecurringEvent, updateRecurringEvent, state } = useFinance();
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
@@ -55,6 +55,9 @@ export function RecurringFormDrawer({
   const [principalAmount, setPrincipalAmount] = useState("");
   const [installmentsCount, setInstallmentsCount] = useState("");
   const [interestRate, setInterestRate] = useState("");
+  const [tarjetaId, setTarjetaId] = useState<string | undefined>(undefined);
+
+  const tarjetas = state.tarjetas.filter((t) => t.isActive);
 
   useEffect(() => {
     if (editEvent) {
@@ -70,6 +73,7 @@ export function RecurringFormDrawer({
       setPrincipalAmount(editEvent.principalAmount?.toString() ?? "");
       setInstallmentsCount(editEvent.installmentsCount?.toString() ?? "");
       setInterestRate(editEvent.interestRate?.toString() ?? "");
+      setTarjetaId(editEvent.tarjetaId);
     } else {
       setName("");
       setType("gasto");
@@ -83,6 +87,7 @@ export function RecurringFormDrawer({
       setPrincipalAmount("");
       setInstallmentsCount("");
       setInterestRate("");
+      setTarjetaId(undefined);
     }
   }, [editEvent, open]);
 
@@ -160,6 +165,7 @@ export function RecurringFormDrawer({
 
     setSaving(true);
     try {
+      const effTarjetaId = isDebt ? tarjetaId : undefined;
       if (editEvent) {
         await updateRecurringEvent(editEvent.id, {
           name: name.trim(),
@@ -170,6 +176,7 @@ export function RecurringFormDrawer({
           userId,
           startDate: startDate || undefined,
           endDate: computedEndDate,
+          tarjetaId: effTarjetaId,
           ...debtFields,
         });
         toast.success("Evento actualizado");
@@ -184,6 +191,7 @@ export function RecurringFormDrawer({
           isActive: true,
           startDate: startDate || undefined,
           endDate: computedEndDate,
+          tarjetaId: effTarjetaId,
           ...debtFields,
         });
         toast.success(isDebt ? "Deuda creada" : "Evento recurrente creado");
@@ -391,6 +399,45 @@ export function RecurringFormDrawer({
                     <span className="text-base font-semibold tabular-nums font-mono">
                       {formatCurrency(suggestedInstallment)}
                     </span>
+                  </div>
+                )}
+
+                {tarjetas.length > 0 && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                      Tarjeta (opcional)
+                    </Label>
+                    <p className="text-[11px] text-muted-foreground/70">
+                      Si la asocias, su cuota del mes entra en la liquidación de la tarjeta.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTarjetaId(undefined)}
+                        className={`rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                          tarjetaId === undefined
+                            ? "bg-foreground text-background shadow-sm"
+                            : "border border-border/60 text-muted-foreground hover:border-border"
+                        }`}
+                      >
+                        Sin tarjeta
+                      </button>
+                      {tarjetas.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setTarjetaId(t.id)}
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                            tarjetaId === t.id
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "border border-border/60 text-muted-foreground hover:border-border"
+                          }`}
+                        >
+                          <CreditCard className="h-4 w-4" strokeWidth={1.5} />
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>

@@ -10,7 +10,14 @@ import {
   deleteLiquidacion,
 } from "@/store/cards-store";
 import { fetchRecords } from "@/store/records-store";
-import { getTarjetasMonthStatus } from "@/lib/card-helpers";
+import {
+  fetchRecurringEvents,
+  fetchMonthConfigs,
+} from "@/store/recurring-store";
+import {
+  getTarjetasMonthStatus,
+  tarjetaDebtCuotaForMonth,
+} from "@/lib/card-helpers";
 import { ok, fail, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
 
 /** Mes/año actual a partir de today() (YYYY-MM-DD). */
@@ -169,11 +176,14 @@ export function registerCardTools(server: McpServer): void {
         const now = currentMonthYear();
         const m = month ?? now.month;
         const y = year ?? now.year;
-        const [tarjetas, records, liquidaciones] = await Promise.all([
-          fetchTarjetas(),
-          fetchRecords(),
-          fetchLiquidaciones(),
-        ]);
+        const [tarjetas, records, liquidaciones, recurringEvents, monthConfigs] =
+          await Promise.all([
+            fetchTarjetas(),
+            fetchRecords(),
+            fetchLiquidaciones(),
+            fetchRecurringEvents(),
+            fetchMonthConfigs(),
+          ]);
         const activeTarjetas = tarjetas.filter(
           (t) => t.isActive && (!tarjetaId || t.id === tarjetaId)
         );
@@ -181,6 +191,8 @@ export function registerCardTools(server: McpServer): void {
           activeTarjetas,
           records,
           liquidaciones,
+          recurringEvents,
+          monthConfigs,
           m,
           y
         );
@@ -240,14 +252,26 @@ export function registerCardTools(server: McpServer): void {
 
         let resolvedAmount = amount;
         if (resolvedAmount === undefined) {
-          const records = await fetchRecords();
-          resolvedAmount = records
+          const [records, recurringEvents, monthConfigs] = await Promise.all([
+            fetchRecords(),
+            fetchRecurringEvents(),
+            fetchMonthConfigs(),
+          ]);
+          const gastos = records
             .filter((r) => {
               if (r.type !== "gasto" || r.tarjetaId !== tarjetaId) return false;
               const [ry, rm] = r.date.split("-").map(Number);
               return ry === year && rm === month;
             })
             .reduce((s, r) => s + r.amount, 0);
+          const { amount: debtCuota } = tarjetaDebtCuotaForMonth(
+            tarjetaId,
+            recurringEvents,
+            monthConfigs,
+            month,
+            year
+          );
+          resolvedAmount = gastos + debtCuota;
         }
 
         const liquidacion = await upsertLiquidacion({

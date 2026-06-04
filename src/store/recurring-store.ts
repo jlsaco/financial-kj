@@ -17,6 +17,7 @@ function toEvent(row: {
   principal_amount: number | null;
   interest_rate: number | null;
   installments_count: number | null;
+  tarjeta_id?: string | null;
 }): RecurringEvent {
   return {
     id: row.id,
@@ -36,6 +37,7 @@ function toEvent(row: {
     interestRate:
       row.interest_rate != null ? Number(row.interest_rate) : undefined,
     installmentsCount: row.installments_count ?? undefined,
+    tarjetaId: row.tarjeta_id ?? undefined,
   };
 }
 
@@ -91,6 +93,7 @@ export async function insertRecurringEvent(
       principal_amount: event.principalAmount ?? null,
       interest_rate: event.interestRate ?? null,
       installments_count: event.installmentsCount ?? null,
+      tarjeta_id: event.tarjetaId ?? null,
     })
     .select()
     .single();
@@ -116,6 +119,7 @@ export async function updateRecurringEvent(
   if (updates.principalAmount !== undefined) dbUpdates.principal_amount = updates.principalAmount ?? null;
   if (updates.interestRate !== undefined) dbUpdates.interest_rate = updates.interestRate ?? null;
   if (updates.installmentsCount !== undefined) dbUpdates.installments_count = updates.installmentsCount ?? null;
+  if ("tarjetaId" in updates) dbUpdates.tarjeta_id = updates.tarjetaId ?? null;
 
   const { data, error } = await supabase
     .from("recurring_events")

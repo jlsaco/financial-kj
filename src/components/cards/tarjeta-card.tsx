@@ -17,7 +17,7 @@ interface TarjetaCardProps {
 export function TarjetaCard({ status, onEdit }: TarjetaCardProps) {
   const { setLiquidacion, clearLiquidacion } = useFinance();
   const [busy, setBusy] = useState(false);
-  const { tarjeta, owed, recordsCount, isPaid, month, year } = status;
+  const { tarjeta, owed, recordsCount, debtCuota, isPaid, month, year } = status;
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -103,6 +103,11 @@ export function TarjetaCard({ status, onEdit }: TarjetaCardProps) {
           <p className="text-xs text-muted-foreground/70">
             {recordsCount} {recordsCount === 1 ? "gasto" : "gastos"}
           </p>
+          {debtCuota > 0 && (
+            <p className="text-xs text-muted-foreground/70">
+              incluye {formatCurrency(debtCuota)} de cuota de deuda
+            </p>
+          )}
         </div>
 
         {owed === 0 && !isPaid ? (
