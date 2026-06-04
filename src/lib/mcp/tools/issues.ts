@@ -11,10 +11,15 @@ import { ok, guard } from "@/lib/mcp/shared";
 
 const zIssueKind = z.enum(["bug", "mejora"]);
 
-/** Label que marca un issue para procesamiento/desarrollo automático por un
- *  agente (pipeline de auto-merge). Se añade por defecto a los issues creados
- *  vía MCP; se puede desactivar con `agentDevelop: false`. */
+/** Label que marca un issue para que un agente lo trabaje automáticamente,
+ *  sin refinamiento/revisión previa. Opt-in: solo si quien crea el issue lo
+ *  pide con `agentDevelop: true`. */
 const AGENT_DEVELOP_LABEL = "agent-develop";
+
+/** Label que marca un issue para que el PR resultante se mergee de forma
+ *  automática, sin revisión. Opt-in con `autoMerge: true`. Independiente de
+ *  agent-develop (puede trabajarse con agente pero requerir revisión al fin). */
+const AGENT_AUTO_MERGE_LABEL = "agent-auto-merge";
 
 /**
  * Tools sobre los issues de GitHub del repositorio de FinanceKJ
@@ -67,12 +72,15 @@ export function registerIssueTools(server: McpServer): void {
   server.tool(
     "crear_issue",
     "Crea un nuevo issue en el repositorio de FinanceKJ. `kind` define la " +
-      "etiqueta: 'bug' (label bug) o 'mejora' (label enhancement). Por defecto " +
-      "añade también el label 'agent-develop', que marca el issue para " +
-      "procesamiento/desarrollo automático por un agente (pipeline de " +
-      "auto-merge); usa agentDevelop=false para no añadirlo. Devuelve el issue " +
-      "creado con su número y su `url` pública en GitHub. Requiere GITHUB_TOKEN " +
-      "configurado en el servidor.",
+      "etiqueta: 'bug' (label bug) o 'mejora' (label enhancement). Quien crea " +
+      "el issue decide explícitamente el grado de automatización con dos flags " +
+      "independientes (ambos opt-in, por defecto false): `agentDevelop` añade " +
+      "el label 'agent-develop' para que un agente trabaje el ticket de forma " +
+      "automática (sin refinamiento/revisión previa) — déjalo en false si la " +
+      "feature debe revisarse o refinarse antes; `autoMerge` añade el label " +
+      "'agent-auto-merge' para que el PR resultante se mergee solo, sin " +
+      "revisión. Devuelve el issue creado con su número y su `url` pública en " +
+      "GitHub. Requiere GITHUB_TOKEN configurado en el servidor.",
     {
       title: z.string().min(1).describe("Título del issue"),
       body: z
@@ -84,17 +92,27 @@ export function registerIssueTools(server: McpServer): void {
         .boolean()
         .optional()
         .describe(
-          "Añade el label 'agent-develop' para auto-procesamiento (por defecto true)"
+          "true añade 'agent-develop' para que un agente trabaje el ticket " +
+            "automáticamente, sin revisión previa (por defecto false)"
+        ),
+      autoMerge: z
+        .boolean()
+        .optional()
+        .describe(
+          "true añade 'agent-auto-merge' para mergear el PR resultante sin " +
+            "revisión (por defecto false)"
         ),
     },
-    async ({ title, body, kind, agentDevelop }) => {
+    async ({ title, body, kind, agentDevelop, autoMerge }) => {
       return guard(async () => {
+        const extraLabels: string[] = [];
+        if (agentDevelop) extraLabels.push(AGENT_DEVELOP_LABEL);
+        if (autoMerge) extraLabels.push(AGENT_AUTO_MERGE_LABEL);
         const issue = await createIssue({
           title,
           body: body ?? "",
           kind,
-          extraLabels:
-            agentDevelop === false ? [] : [AGENT_DEVELOP_LABEL],
+          extraLabels,
         });
         return ok(issue);
       });
