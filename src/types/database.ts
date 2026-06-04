@@ -32,13 +32,62 @@ export type Database = {
         }
         Relationships: []
       }
+      compras_diferidas: {
+        Row: {
+          category: Database["public"]["Enums"]["category"]
+          created_at: string
+          id: string
+          installments_count: number
+          interest_rate: number | null
+          name: string
+          start_date: string
+          tarjeta_id: string | null
+          total_amount: number
+          user_id: Database["public"]["Enums"]["user_id"]
+        }
+        Insert: {
+          category: Database["public"]["Enums"]["category"]
+          created_at?: string
+          id?: string
+          installments_count: number
+          interest_rate?: number | null
+          name: string
+          start_date: string
+          tarjeta_id?: string | null
+          total_amount: number
+          user_id: Database["public"]["Enums"]["user_id"]
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["category"]
+          created_at?: string
+          id?: string
+          installments_count?: number
+          interest_rate?: number | null
+          name?: string
+          start_date?: string
+          tarjeta_id?: string | null
+          total_amount?: number
+          user_id?: Database["public"]["Enums"]["user_id"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compras_diferidas_tarjeta_id_fkey"
+            columns: ["tarjeta_id"]
+            isOneToOne: false
+            referencedRelation: "tarjetas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_records: {
         Row: {
           amount: number
           category: Database["public"]["Enums"]["category"]
+          compra_diferida_id: string | null
           created_at: string
           date: string
           id: string
+          installment_no: number | null
           name: string
           recurring_event_id: string | null
           tarjeta_id: string | null
@@ -49,9 +98,11 @@ export type Database = {
         Insert: {
           amount: number
           category: Database["public"]["Enums"]["category"]
+          compra_diferida_id?: string | null
           created_at?: string
           date: string
           id?: string
+          installment_no?: number | null
           name: string
           recurring_event_id?: string | null
           tarjeta_id?: string | null
@@ -62,9 +113,11 @@ export type Database = {
         Update: {
           amount?: number
           category?: Database["public"]["Enums"]["category"]
+          compra_diferida_id?: string | null
           created_at?: string
           date?: string
           id?: string
+          installment_no?: number | null
           name?: string
           recurring_event_id?: string | null
           tarjeta_id?: string | null
@@ -73,6 +126,13 @@ export type Database = {
           user_id?: Database["public"]["Enums"]["user_id"]
         }
         Relationships: [
+          {
+            foreignKeyName: "finance_records_compra_diferida_id_fkey"
+            columns: ["compra_diferida_id"]
+            isOneToOne: false
+            referencedRelation: "compras_diferidas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "finance_records_tarjeta_id_fkey"
             columns: ["tarjeta_id"]

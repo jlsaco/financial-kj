@@ -50,7 +50,15 @@ const mcpHandler = createMcpHandler(
       "liquidado o pendiente. liquidar_tarjeta_mes marca un periodo como pagado " +
       "(pagado=true, importe por defecto = lo gastado) o pendiente (pagado=false). La " +
       "liquidación NO es un gasto nuevo: solo registra que el periodo quedó saldado, " +
-      "evitando doble conteo.",
+      "evitando doble conteo. " +
+      "Compras diferidas: una compra grande (casa, viajes…) puede repartirse en " +
+      "cuotas con crear_compra_diferida (name, category, userId, totalAmount, " +
+      "installmentsCount, tarjetaId?, interestRate?, startDate?). Genera N gastos " +
+      "mensuales (uno por mes), cada uno con su tarjeta y fecha, de modo que cada " +
+      "cuota pesa solo en su mes (en el rubro y en la liquidación de la tarjeta). La " +
+      "cuota = totalAmount ÷ installmentsCount. Usa listar_compras_diferidas y " +
+      "resumen_compra_diferida para ver cuotas pagadas/restantes, saldo pendiente y " +
+      "próxima cuota, y borrar_compra_diferida para eliminarla con sus cuotas en cascada.",
   },
   {
     basePath: "/api",

@@ -4,15 +4,18 @@ import { useState } from "react";
 import { PageHeader } from "@/components/layout/page-header";
 import { CardFormDrawer } from "@/components/cards/card-form-drawer";
 import { TarjetaCard } from "@/components/cards/tarjeta-card";
+import { CompraDiferidaCard } from "@/components/cards/compra-diferida-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useFinance } from "@/contexts/finance-context";
 import { useUI } from "@/contexts/ui-context";
 import { Tarjeta } from "@/types";
+import { getCompraDiferidaSummary } from "@/lib/compra-helpers";
 import { formatCurrency } from "@/lib/formatters";
 import { Plus, CreditCard } from "lucide-react";
+import { toast } from "sonner";
 
 export default function TarjetasPage() {
-  const { state, getTarjetasStatus } = useFinance();
+  const { state, getTarjetasStatus, deleteCompraDiferida } = useFinance();
   const { selectedMonth, selectedYear } = useUI();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editTarjeta, setEditTarjeta] = useState<Tarjeta | null>(null);
@@ -25,6 +28,21 @@ export default function TarjetasPage() {
   const totalPendiente = activeStatuses
     .filter((s) => !s.isPaid)
     .reduce((sum, s) => sum + s.owed, 0);
+
+  const comprasSummaries = state.comprasDiferidas.map((c) =>
+    getCompraDiferidaSummary(c, state.records)
+  );
+  const tarjetaName = (id?: string) =>
+    id ? state.tarjetas.find((t) => t.id === id)?.name : undefined;
+
+  const handleDeleteCompra = async (id: string) => {
+    try {
+      await deleteCompraDiferida(id);
+      toast.success("Compra diferida eliminada");
+    } catch {
+      toast.error("Error al eliminar");
+    }
+  };
 
   const handleAdd = () => {
     setEditTarjeta(null);
@@ -120,6 +138,23 @@ export default function TarjetasPage() {
               </div>
             )}
           </>
+        )}
+
+        {/* Compras a cuotas (diferidas) */}
+        {comprasSummaries.length > 0 && (
+          <div className="mt-6 space-y-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
+              Compras a cuotas ({comprasSummaries.length})
+            </h2>
+            {comprasSummaries.map((summary) => (
+              <CompraDiferidaCard
+                key={summary.compra.id}
+                summary={summary}
+                tarjetaName={tarjetaName(summary.compra.tarjetaId)}
+                onDelete={handleDeleteCompra}
+              />
+            ))}
+          </div>
         )}
       </div>
 

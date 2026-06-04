@@ -11,6 +11,8 @@ function toRecord(row: {
   date: string;
   recurring_event_id: string | null;
   tarjeta_id: string | null;
+  compra_diferida_id?: string | null;
+  installment_no?: number | null;
   created_at: string;
   updated_at: string;
 }): FinanceRecord {
@@ -26,6 +28,8 @@ function toRecord(row: {
     updatedAt: row.updated_at,
     recurringEventId: row.recurring_event_id ?? undefined,
     tarjetaId: row.tarjeta_id ?? undefined,
+    compraDiferidaId: row.compra_diferida_id ?? undefined,
+    installmentNo: row.installment_no ?? undefined,
   };
 }
 

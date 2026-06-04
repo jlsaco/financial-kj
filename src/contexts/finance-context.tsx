@@ -18,11 +18,13 @@ import {
   Tarjeta,
   Liquidacion,
   TarjetaMonthStatus,
+  CompraDiferida,
 } from "@/types";
 import * as recordsStore from "@/store/records-store";
 import * as recurringStore from "@/store/recurring-store";
 import * as budgetsStore from "@/store/budgets-store";
 import * as cardsStore from "@/store/cards-store";
+import * as comprasStore from "@/store/compras-store";
 import { getUpcomingRecurringEvents } from "@/lib/date-helpers";
 import { getTarjetasMonthStatus } from "@/lib/card-helpers";
 import { CATEGORIES } from "@/lib/constants";
@@ -35,6 +37,7 @@ interface FinanceState {
   budgets: CategoryBudget[];
   tarjetas: Tarjeta[];
   liquidaciones: Liquidacion[];
+  comprasDiferidas: CompraDiferida[];
   isLoaded: boolean;
 }
 
@@ -52,7 +55,10 @@ type FinanceAction =
   | { type: "UPDATE_TARJETA"; payload: Tarjeta }
   | { type: "DELETE_TARJETA"; payload: string }
   | { type: "SET_LIQUIDACION"; payload: Liquidacion }
-  | { type: "DELETE_LIQUIDACION"; payload: { tarjetaId: string; month: number; year: number } };
+  | { type: "DELETE_LIQUIDACION"; payload: { tarjetaId: string; month: number; year: number } }
+  | { type: "SET_RECORDS"; payload: FinanceRecord[] }
+  | { type: "ADD_COMPRA"; payload: CompraDiferida }
+  | { type: "DELETE_COMPRA"; payload: string };
 
 const initialState: FinanceState = {
   records: [],
@@ -61,6 +67,7 @@ const initialState: FinanceState = {
   budgets: [],
   tarjetas: [],
   liquidaciones: [],
+  comprasDiferidas: [],
   isLoaded: false,
 };
 
@@ -192,6 +199,27 @@ function financeReducer(
         ),
       };
 
+    case "SET_RECORDS":
+      return { ...state, records: action.payload };
+
+    case "ADD_COMPRA":
+      return {
+        ...state,
+        comprasDiferidas: [action.payload, ...state.comprasDiferidas],
+      };
+
+    case "DELETE_COMPRA":
+      // En BD las cuotas (finance_records hijos) se borran en cascada.
+      return {
+        ...state,
+        comprasDiferidas: state.comprasDiferidas.filter(
+          (c) => c.id !== action.payload
+        ),
+        records: state.records.filter(
+          (r) => r.compraDiferidaId !== action.payload
+        ),
+      };
+
     default:
       return state;
   }
@@ -232,6 +260,12 @@ interface FinanceContextValue {
   ) => Promise<void>;
   /** Estado de liquidación de todas las tarjetas para un periodo. */
   getTarjetasStatus: (month: number, year: number) => TarjetaMonthStatus[];
+  /** Crea una compra diferida (genera sus N cuotas como gastos). */
+  addCompraDiferida: (
+    data: Omit<CompraDiferida, "id" | "createdAt">
+  ) => Promise<void>;
+  /** Borra una compra diferida y sus cuotas. */
+  deleteCompraDiferida: (id: string) => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -248,6 +282,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         budgets,
         tarjetas,
         liquidaciones,
+        comprasDiferidas,
       ] = await Promise.all([
         recordsStore.fetchRecords(),
         recurringStore.fetchRecurringEvents(),
@@ -255,6 +290,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         budgetsStore.fetchBudgets(),
         cardsStore.fetchTarjetas(),
         cardsStore.fetchLiquidaciones(),
+        comprasStore.fetchComprasDiferidas(),
       ]);
       dispatch({
         type: "INIT",
@@ -265,6 +301,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           budgets,
           tarjetas,
           liquidaciones,
+          comprasDiferidas,
         },
       });
     }
@@ -420,6 +457,22 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     [state.tarjetas, state.records, state.liquidaciones]
   );
 
+  const addCompraDiferida = useCallback(
+    async (data: Omit<CompraDiferida, "id" | "createdAt">) => {
+      const saved = await comprasStore.insertCompraDiferida(data);
+      // Las cuotas (hijos) se insertan en BD fuera del dispatch: recargamos.
+      const records = await recordsStore.fetchRecords();
+      dispatch({ type: "SET_RECORDS", payload: records });
+      dispatch({ type: "ADD_COMPRA", payload: saved });
+    },
+    []
+  );
+
+  const deleteCompraDiferida = useCallback(async (id: string) => {
+    await comprasStore.deleteCompraDiferida(id);
+    dispatch({ type: "DELETE_COMPRA", payload: id });
+  }, []);
+
   return (
     <FinanceContext.Provider
       value={{
@@ -440,6 +493,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         setLiquidacion,
         clearLiquidacion,
         getTarjetasStatus,
+        addCompraDiferida,
+        deleteCompraDiferida,
       }}
     >
       {children}
