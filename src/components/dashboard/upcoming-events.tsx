@@ -20,13 +20,21 @@ export function UpcomingEvents() {
           {upcoming.map((item) => (
             <div
               key={item.recurringEvent.id}
-              className="min-w-[190px] shrink-0 rounded-2xl bg-card p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)]"
+              className={`min-w-[190px] shrink-0 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)] ${
+                item.isOverdue
+                  ? "bg-rose-500/5 ring-1 ring-inset ring-rose-500/40"
+                  : "bg-card"
+              }`}
             >
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold truncate">
                   {item.recurringEvent.name}
                 </p>
-                {item.daysUntilDue === 0 ? (
+                {item.isOverdue ? (
+                  <span className="ml-2 shrink-0 inline-flex items-center rounded-lg bg-rose-100 px-2 py-0.5 text-xs font-bold text-rose-700">
+                    <AlertCircle className="mr-1 h-3 w-3" /> Pagar ya
+                  </span>
+                ) : item.daysUntilDue === 0 ? (
                   <span className="ml-2 shrink-0 inline-flex items-center rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
                     <AlertCircle className="mr-1 h-3 w-3" /> Hoy
                   </span>

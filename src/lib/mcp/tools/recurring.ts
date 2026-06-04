@@ -2,12 +2,14 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   fetchRecurringEvents,
+  fetchMonthConfigs,
   insertRecurringEvent,
   updateRecurringEvent,
   upsertMonthConfig,
   deleteRecurringEvent,
 } from "@/store/recurring-store";
 import { computeDebtEndDate } from "@/lib/debt-helpers";
+import { classifyRecurringEvents } from "@/lib/date-helpers";
 import { ok, fail, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/shared";
 
 /** Fecha en formato YYYY-MM-DD. */
@@ -146,6 +148,49 @@ export function registerRecurringTools(server: McpServer): void {
         let events = await fetchRecurringEvents();
         if (soloActivos) events = events.filter((e) => e.isActive);
         return ok({ count: events.length, events });
+      });
+    }
+  );
+
+  server.tool(
+    "estado_recurrentes_mes",
+    "Clasifica los recurrentes ACTIVOS por su estado de pago en el mes en curso, " +
+      "en tres grupos: `vencidos` (la fecha ya pasó y no hay pago registrado este " +
+      "mes; prioritario), `proximos` (la fecha aún no llega y no están pagados) y " +
+      "`pagados` (ya tienen pago registrado este mes). Cada grupo viene ordenado " +
+      "por fecha de vencimiento ascendente. Útil para saber qué pagos urgen.",
+    {},
+    async () => {
+      return guard(async () => {
+        const [events, configs] = await Promise.all([
+          fetchRecurringEvents(),
+          fetchMonthConfigs(),
+        ]);
+        const { overdue, upcoming, paid } = classifyRecurringEvents(
+          events,
+          configs
+        );
+        const toItem = (it: {
+          event: { id: string; name: string; category: string };
+          dueDate: Date;
+          amount: number;
+        }) => ({
+          id: it.event.id,
+          name: it.event.name,
+          category: it.event.category,
+          dueDate: it.dueDate.toISOString().slice(0, 10),
+          amount: it.amount,
+        });
+        return ok({
+          vencidos: overdue.map(toItem),
+          proximos: upcoming.map(toItem),
+          pagados: paid.map(toItem),
+          counts: {
+            vencidos: overdue.length,
+            proximos: upcoming.length,
+            pagados: paid.length,
+          },
+        });
       });
     }
   );

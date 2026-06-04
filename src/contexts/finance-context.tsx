@@ -15,6 +15,7 @@ import {
   CategoryBudget,
   Category,
   UpcomingEvent,
+  ClassifiedRecurringGroups,
   Tarjeta,
   Liquidacion,
   TarjetaMonthStatus,
@@ -28,7 +29,10 @@ import * as budgetsStore from "@/store/budgets-store";
 import * as cardsStore from "@/store/cards-store";
 import * as comprasStore from "@/store/compras-store";
 import * as cuentasStore from "@/store/cuentas-store";
-import { getUpcomingRecurringEvents } from "@/lib/date-helpers";
+import {
+  classifyRecurringEvents,
+  getUpcomingRecurringEvents,
+} from "@/lib/date-helpers";
 import { getTarjetasMonthStatus } from "@/lib/card-helpers";
 import { computeCuentasSaldos } from "@/lib/account-helpers";
 import { CATEGORIES } from "@/lib/constants";
@@ -284,6 +288,7 @@ interface FinanceContextValue {
     byCategory: Record<Category, number>;
   };
   getUpcomingEvents: () => UpcomingEvent[];
+  getClassifiedRecurring: () => ClassifiedRecurringGroups;
   addTarjeta: (
     data: Omit<Tarjeta, "id" | "createdAt" | "isActive"> & { isActive?: boolean }
   ) => Promise<Tarjeta>;
@@ -449,6 +454,10 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return getUpcomingRecurringEvents(state.recurringEvents, state.monthConfigs);
   }, [state.recurringEvents, state.monthConfigs]);
 
+  const getClassifiedRecurring = useCallback(() => {
+    return classifyRecurringEvents(state.recurringEvents, state.monthConfigs);
+  }, [state.recurringEvents, state.monthConfigs]);
+
   const addTarjeta = useCallback(
     async (
       data: Omit<Tarjeta, "id" | "createdAt" | "isActive"> & {
@@ -576,6 +585,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         updateBudget,
         getMonthSummary,
         getUpcomingEvents,
+        getClassifiedRecurring,
         addTarjeta,
         updateTarjeta,
         deleteTarjeta,
