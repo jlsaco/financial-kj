@@ -77,7 +77,11 @@ const mcpHandler = createMcpHandler(
       "Issues (GitHub): bugs y mejoras del repositorio público de FinanceKJ. " +
       "listar_issues lista los issues (filtrable por estado open/closed/all), " +
       "ver_issue devuelve uno por su número, crear_issue abre uno nuevo " +
-      "(kind 'bug' o 'mejora'), comentar_issue añade un comentario y " +
+      "(kind 'bug' o 'mejora'; dos flags opt-in independientes deciden la " +
+      "automatización: agentDevelop=true añade el label 'agent-develop' para " +
+      "que un agente trabaje el ticket sin revisión previa, y autoMerge=true " +
+      "añade 'agent-auto-merge' para mergear el PR resultante sin revisión; " +
+      "ambos por defecto false), comentar_issue añade un comentario y " +
       "actualizar_estado_issue abre o cierra un issue (motivo completed/" +
       "not_planned al cerrar). Cada issue incluye su url pública en GitHub.",
   },
