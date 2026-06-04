@@ -1,19 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { RecurringEvent } from "@/types";
+import { RecurringEvent, RecurringPaymentStatus } from "@/types";
 import { CategoryBadge } from "@/components/shared/category-badge";
 import { UserAvatar } from "@/components/shared/user-selector";
 import { Switch } from "@/components/ui/switch";
 import { formatCurrency } from "@/lib/formatters";
-import { ChevronRight } from "lucide-react";
+import { AlertTriangle, Check, ChevronRight } from "lucide-react";
 import { useFinance } from "@/contexts/finance-context";
 
 interface RecurringCardProps {
   event: RecurringEvent;
+  /** Estado de pago del mes en curso; controla el resaltado visual. */
+  status?: RecurringPaymentStatus;
 }
 
-export function RecurringCard({ event }: RecurringCardProps) {
+export function RecurringCard({ event, status }: RecurringCardProps) {
   const { updateRecurringEvent } = useFinance();
 
   const toggleActive = async (e: React.MouseEvent) => {
@@ -26,12 +28,37 @@ export function RecurringCard({ event }: RecurringCardProps) {
     }
   };
 
+  const isOverdue = status === "overdue";
+  const isPaid = status === "paid";
+
   return (
-    <Link href={`/recurrentes/${event.id}`}>
-      <div className="group flex items-center gap-3 rounded-2xl bg-card px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)] transition-all hover:bg-accent/40 active:scale-[0.99]">
+    <Link href={`/recurrentes/${event.id}`} className="block">
+      <div
+        className={`group flex items-center gap-3 rounded-2xl px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)] transition-all hover:bg-accent/40 active:scale-[0.99] ${
+          isOverdue
+            ? "bg-rose-500/5 ring-1 ring-inset ring-rose-500/40"
+            : isPaid
+              ? "bg-card opacity-60"
+              : "bg-card"
+        }`}
+      >
         <UserAvatar userId={event.userId} />
         <div className="flex-1 min-w-0">
-          <p className="truncate text-sm font-semibold">{event.name}</p>
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-semibold">{event.name}</p>
+            {isOverdue && (
+              <span className="shrink-0 inline-flex items-center rounded-md bg-rose-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-rose-600">
+                <AlertTriangle className="mr-0.5 h-3 w-3" strokeWidth={2.2} />
+                Vencido
+              </span>
+            )}
+            {isPaid && (
+              <span className="shrink-0 inline-flex items-center rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-600">
+                <Check className="mr-0.5 h-3 w-3" strokeWidth={2.5} />
+                Pagado
+              </span>
+            )}
+          </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             <CategoryBadge category={event.category} />
             {event.category !== "deuda" && (

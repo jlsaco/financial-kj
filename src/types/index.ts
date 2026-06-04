@@ -211,4 +211,25 @@ export interface UpcomingEvent {
   dueDate: Date;
   daysUntilDue: number;
   amount: number;
+  /** true si el recurrente ya venció este mes y no se ha registrado el pago. */
+  isOverdue: boolean;
+}
+
+/** Estado de pago de un recurrente en el mes en curso. */
+export type RecurringPaymentStatus = "overdue" | "upcoming" | "paid";
+
+/** Recurrente clasificado por su estado de pago del mes actual (UI/MCP). */
+export interface ClassifiedRecurring {
+  event: RecurringEvent;
+  status: RecurringPaymentStatus;
+  dueDate: Date;
+  isPaid: boolean;
+  amount: number;
+}
+
+/** Recurrentes agrupados por estado de pago del mes en curso. */
+export interface ClassifiedRecurringGroups {
+  overdue: ClassifiedRecurring[];
+  upcoming: ClassifiedRecurring[];
+  paid: ClassifiedRecurring[];
 }

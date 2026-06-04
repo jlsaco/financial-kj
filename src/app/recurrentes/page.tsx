@@ -7,15 +7,18 @@ import { RecurringFormDrawer } from "@/components/recurring/recurring-form-drawe
 import { EmptyState } from "@/components/shared/empty-state";
 import { useFinance } from "@/contexts/finance-context";
 import { RecurringEvent } from "@/types";
-import { Plus, Repeat } from "lucide-react";
+import { AlertTriangle, ChevronDown, CheckCircle2, Clock, Plus, Repeat } from "lucide-react";
 
 export default function RecurrentesPage() {
-  const { state } = useFinance();
+  const { state, getClassifiedRecurring } = useFinance();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<RecurringEvent | null>(null);
+  const [showPaid, setShowPaid] = useState(false);
 
-  const activeEvents = state.recurringEvents.filter((e) => e.isActive);
+  const { overdue, upcoming, paid } = getClassifiedRecurring();
   const inactiveEvents = state.recurringEvents.filter((e) => !e.isActive);
+  const hasAny =
+    overdue.length + upcoming.length + paid.length + inactiveEvents.length > 0;
 
   const handleAdd = () => {
     setEditEvent(null);
@@ -49,27 +52,74 @@ export default function RecurrentesPage() {
         }
       />
 
-      <div className="space-y-4 p-4">
-        {activeEvents.length === 0 && inactiveEvents.length === 0 ? (
+      <div className="space-y-6 p-4">
+        {!hasAny ? (
           <EmptyState
             message="No hay eventos recurrentes"
             icon={<Repeat className="h-12 w-12" strokeWidth={1} />}
           />
         ) : (
           <>
-            {activeEvents.length > 0 && (
+            {overdue.length > 0 && (
               <div className="space-y-3">
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
-                  Activos ({activeEvents.length})
+                <h2 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-rose-600">
+                  <AlertTriangle className="h-3.5 w-3.5" strokeWidth={2.4} />
+                  Vencidos sin pagar ({overdue.length})
                 </h2>
-                {activeEvents.map((event) => (
-                  <RecurringCard key={event.id} event={event} />
+                {overdue.map((item) => (
+                  <RecurringCard
+                    key={item.event.id}
+                    event={item.event}
+                    status="overdue"
+                  />
                 ))}
               </div>
             )}
 
+            {upcoming.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-foreground/35">
+                  <Clock className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  Próximos sin pagar ({upcoming.length})
+                </h2>
+                {upcoming.map((item) => (
+                  <RecurringCard
+                    key={item.event.id}
+                    event={item.event}
+                    status="upcoming"
+                  />
+                ))}
+              </div>
+            )}
+
+            {paid.length > 0 && (
+              <div className="space-y-3">
+                <button
+                  onClick={() => setShowPaid((v) => !v)}
+                  className="flex w-full items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-foreground/35 transition-colors hover:text-foreground/55"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.2} />
+                  Pagados este mes ({paid.length})
+                  <ChevronDown
+                    className={`ml-auto h-4 w-4 transition-transform ${
+                      showPaid ? "rotate-180" : ""
+                    }`}
+                    strokeWidth={2}
+                  />
+                </button>
+                {showPaid &&
+                  paid.map((item) => (
+                    <RecurringCard
+                      key={item.event.id}
+                      event={item.event}
+                      status="paid"
+                    />
+                  ))}
+              </div>
+            )}
+
             {inactiveEvents.length > 0 && (
-              <div className="mt-6 space-y-3">
+              <div className="space-y-3">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
                   Inactivos ({inactiveEvents.length})
                 </h2>
