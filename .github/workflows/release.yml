@@ -1,0 +1,77 @@
+name: release
+
+# Versionado automático con semantic-release. Corre en cada push a `main`
+# (cada merge). A partir de los conventional commits calcula la versión, taggea,
+# crea el GitHub Release, actualiza CHANGELOG.md y commitea de vuelta el bump de
+# package.json a `main`.
+#
+# Identidad: todo (commit, tag, GitHub Release) corre con el GITHUB_TOKEN
+# efímero del runner y queda a nombre de `github-actions[bot]`, NO de una
+# persona. Es una automatización: no debe atribuirse a ningún usuario.
+#
+# Importante (anti-bucle): el commit de release lleva `[skip ci]` en el mensaje,
+# por lo que GitHub Actions NO vuelve a disparar este workflow (además, los
+# pushes hechos con GITHUB_TOKEN no re-disparan workflows de Actions). Amplify,
+# en cambio, SÍ despliega ese commit (solo ignora `[skip-cd]`, no `[skip ci]`),
+# de modo que el deploy autoritativo queda con la versión ya bumpeada y la UI
+# muestra vX.Y.Z.
+#
+# ⚠️ Branch protection: como ahora empuja `github-actions[bot]` (no un PAT de
+# admin), si `main` tiene reglas de protección hay que permitir explícitamente
+# que ese actor pueda pushear (Settings → Branches → bypass), o el push del
+# commit de release fallará. Ver README.
+
+on:
+  push:
+    branches: [main]
+
+# Un solo release a la vez; no cancelar uno en curso.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    # Defensa extra: GitHub ya omite runs cuyo head commit trae [skip ci], pero
+    # lo dejamos explícito por claridad.
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # semantic-release autentica el push con el GITHUB_TOKEN del env, no
+          # con las credenciales persistidas del checkout.
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Release
+        env:
+          # GITHUB_TOKEN efímero del runner (no un PAT): el commit, el tag y el
+          # Release quedan como github-actions[bot]. Los scopes los define el
+          # bloque `permissions` de arriba.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Forzar que el commit de release también sea del bot (avatar/enlace de
+          # github-actions[bot]), no de semantic-release-bot ni de una persona.
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: 41898282+github-actions[bot]@users.noreply.github.com
+        # semantic-release y los plugins (changelog, git) están en
+        # devDependencies y los instaló `npm ci` arriba: versiones pinneadas en
+        # el lockfile, sin descargas flotantes en cada run.
+        run: npx semantic-release

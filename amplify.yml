@@ -12,6 +12,11 @@ frontend:
         # escribimos en .env.production para que Next.js las cargue al arrancar
         # el servidor. `|| true` evita que el build falle si alguna no existe.
         - env | grep -e '^GITHUB_TOKEN=' -e '^GITHUB_OWNER=' -e '^GITHUB_REPO=' -e '^MCP_AUTH_TOKEN=' >> .env.production || true
+        # Versión visible en la UI (vX.Y.Z). Sale de package.json (que
+        # semantic-release bumpea y commitea en cada release), NO del commit SHA.
+        # next.config.ts también la lee de package.json; esto la fija explícita
+        # en el build de Amplify.
+        - export NEXT_PUBLIC_APP_VERSION="$(node -p "require('./package.json').version")"
         - npm run build
   artifacts:
     baseDirectory: .next

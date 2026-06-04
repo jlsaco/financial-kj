@@ -27,6 +27,23 @@ export interface Issue {
   updatedAt: string;
 }
 
+/** Un release publicado en GitHub (historial de versiones de la app). */
+export interface Release {
+  id: number;
+  /** Tag de la versión, p. ej. "v1.2.0". */
+  tagName: string;
+  /** Nombre del release (puede coincidir con el tag). */
+  name: string | null;
+  /** Notas del release (changelog en Markdown), puede venir vacío. */
+  body: string | null;
+  /** URL pública del release en GitHub. */
+  url: string;
+  /** Fecha de publicación (ISO) o null si es borrador. */
+  publishedAt: string | null;
+  isPrerelease: boolean;
+  isDraft: boolean;
+}
+
 export interface User {
   id: UserId;
   name: string;

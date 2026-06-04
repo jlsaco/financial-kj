@@ -1,4 +1,4 @@
-import { Issue, IssueKind } from "@/types";
+import { Issue, IssueKind, Release } from "@/types";
 
 const GITHUB_API = "https://api.github.com";
 
@@ -42,6 +42,17 @@ function headers() {
     "X-GitHub-Api-Version": "2022-11-28",
     "Content-Type": "application/json",
   };
+}
+
+/** Headers para endpoints públicos (p. ej. releases de un repo público).
+ *  El token es opcional: si existe sube el rate-limit, pero no es obligatorio. */
+function publicHeaders(): Record<string, string> {
+  const base: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+  };
+  if (TOKEN) base.Authorization = `Bearer ${TOKEN}`;
+  return base;
 }
 
 function toIssue(raw: GitHubApiIssue): Issue {
@@ -128,6 +139,51 @@ export async function createIssue(input: {
   }
 
   return toIssue((await res.json()) as GitHubApiIssue);
+}
+
+interface GitHubApiRelease {
+  id: number;
+  tag_name: string;
+  name: string | null;
+  body: string | null;
+  html_url: string;
+  published_at: string | null;
+  draft: boolean;
+  prerelease: boolean;
+}
+
+function toRelease(raw: GitHubApiRelease): Release {
+  return {
+    id: raw.id,
+    tagName: raw.tag_name,
+    name: raw.name,
+    body: raw.body,
+    url: raw.html_url,
+    publishedAt: raw.published_at,
+    isDraft: raw.draft,
+    isPrerelease: raw.prerelease,
+  };
+}
+
+/** Lists the repository's published releases, newest first (drafts excluded).
+ *  El endpoint de releases es público para repos públicos: no requiere token. */
+export async function listReleases(): Promise<Release[]> {
+  const url = `${GITHUB_API}/repos/${OWNER}/${REPO}/releases?per_page=50`;
+
+  const res = await fetch(url, {
+    headers: publicHeaders(),
+    // Releases cambian con cada deploy; cacheamos un poco para no agotar el
+    // rate-limit pero sin quedar demasiado obsoletos.
+    next: { revalidate: 300 },
+  });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${detail}`);
+  }
+
+  const raw = (await res.json()) as GitHubApiRelease[];
+  return raw.filter((r) => !r.draft).map(toRelease);
 }
 
 /** Adds a comment to an existing issue. Returns the new comment's url. */

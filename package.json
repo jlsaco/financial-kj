@@ -1,6 +1,6 @@
 {
   "name": "financekj",
-  "version": "0.1.0",
+  "version": "0.1.29",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -30,12 +30,15 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "semantic-release": "^24.2.9",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
