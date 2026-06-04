@@ -3,6 +3,7 @@ import { registerRecordTools } from "@/lib/mcp/tools/records";
 import { registerRecurringTools } from "@/lib/mcp/tools/recurring";
 import { registerDebtTools } from "@/lib/mcp/tools/debts";
 import { registerSummaryTools } from "@/lib/mcp/tools/summary";
+import { registerCardTools } from "@/lib/mcp/tools/cards";
 
 /**
  * Registro central de tools del MCP.
@@ -15,6 +16,7 @@ const registrars: Array<(server: McpServer) => void> = [
   registerRecurringTools,
   registerDebtTools,
   registerSummaryTools,
+  registerCardTools,
 ];
 
 export function registerAllTools(server: McpServer): void {

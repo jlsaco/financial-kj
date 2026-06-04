@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, ArrowLeftRight, Repeat, Target } from "lucide-react";
+import {
+  House,
+  ArrowLeftRight,
+  Repeat,
+  Target,
+  CreditCard,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { href: "/", icon: House, label: "Inicio" },
   { href: "/registros", icon: ArrowLeftRight, label: "Registros" },
   { href: "/recurrentes", icon: Repeat, label: "Recurrentes" },
+  { href: "/tarjetas", icon: CreditCard, label: "Tarjetas" },
   { href: "/presupuestos", icon: Target, label: "Metas" },
 ];
 

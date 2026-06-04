@@ -7,7 +7,10 @@ import { ok, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/sha
 export function registerRecordTools(server: McpServer): void {
   server.tool(
     "crear_gasto",
-    "Registra un gasto en finance_records.",
+    "Registra un gasto en finance_records. Opcionalmente se puede indicar la " +
+      "tarjeta (medio de pago) con la que se pagó mediante tarjetaId; sin " +
+      "tarjeta se asume débito/efectivo. El gasto siempre cuenta en su rubro; " +
+      "la tarjeta solo agrupa para la liquidación mensual (ver estado_tarjetas).",
     {
       name: z.string().describe("Descripción del gasto, p.ej. 'Mercado Éxito'"),
       amount: z.number().positive().describe("Monto en pesos (positivo)"),
@@ -18,8 +21,15 @@ export function registerRecordTools(server: McpServer): void {
         .regex(/^\d{4}-\d{2}-\d{2}$/)
         .optional()
         .describe("Fecha YYYY-MM-DD (por defecto hoy)"),
+      tarjetaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "ID de la tarjeta con la que se pagó (medio de pago). Omitir = débito/efectivo."
+        ),
     },
-    async ({ name, amount, category, userId, date }) => {
+    async ({ name, amount, category, userId, date, tarjetaId }) => {
       return guard(async () => {
         const record = await insertRecord({
           name,
@@ -28,6 +38,7 @@ export function registerRecordTools(server: McpServer): void {
           userId,
           type: "gasto",
           date: date ?? today(),
+          tarjetaId,
         });
         return ok(record);
       });

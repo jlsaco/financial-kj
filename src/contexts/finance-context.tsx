@@ -15,11 +15,16 @@ import {
   CategoryBudget,
   Category,
   UpcomingEvent,
+  Tarjeta,
+  Liquidacion,
+  TarjetaMonthStatus,
 } from "@/types";
 import * as recordsStore from "@/store/records-store";
 import * as recurringStore from "@/store/recurring-store";
 import * as budgetsStore from "@/store/budgets-store";
+import * as cardsStore from "@/store/cards-store";
 import { getUpcomingRecurringEvents } from "@/lib/date-helpers";
+import { getTarjetasMonthStatus } from "@/lib/card-helpers";
 import { CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
@@ -28,6 +33,8 @@ interface FinanceState {
   recurringEvents: RecurringEvent[];
   monthConfigs: MonthPaymentConfig[];
   budgets: CategoryBudget[];
+  tarjetas: Tarjeta[];
+  liquidaciones: Liquidacion[];
   isLoaded: boolean;
 }
 
@@ -40,13 +47,20 @@ type FinanceAction =
   | { type: "UPDATE_RECURRING"; payload: RecurringEvent }
   | { type: "DELETE_RECURRING"; payload: string }
   | { type: "SET_MONTH_CONFIG"; payload: MonthPaymentConfig }
-  | { type: "UPDATE_BUDGET"; payload: CategoryBudget };
+  | { type: "UPDATE_BUDGET"; payload: CategoryBudget }
+  | { type: "ADD_TARJETA"; payload: Tarjeta }
+  | { type: "UPDATE_TARJETA"; payload: Tarjeta }
+  | { type: "DELETE_TARJETA"; payload: string }
+  | { type: "SET_LIQUIDACION"; payload: Liquidacion }
+  | { type: "DELETE_LIQUIDACION"; payload: { tarjetaId: string; month: number; year: number } };
 
 const initialState: FinanceState = {
   records: [],
   recurringEvents: [],
   monthConfigs: [],
   budgets: [],
+  tarjetas: [],
+  liquidaciones: [],
   isLoaded: false,
 };
 
@@ -124,6 +138,60 @@ function financeReducer(
         ),
       };
 
+    case "ADD_TARJETA":
+      return { ...state, tarjetas: [...state.tarjetas, action.payload] };
+
+    case "UPDATE_TARJETA":
+      return {
+        ...state,
+        tarjetas: state.tarjetas.map((t) =>
+          t.id === action.payload.id ? action.payload : t
+        ),
+      };
+
+    case "DELETE_TARJETA":
+      // En BD: finance_records.tarjeta_id → SET NULL, liquidaciones → CASCADE.
+      // Reflejamos lo mismo en memoria.
+      return {
+        ...state,
+        tarjetas: state.tarjetas.filter((t) => t.id !== action.payload),
+        records: state.records.map((r) =>
+          r.tarjetaId === action.payload ? { ...r, tarjetaId: undefined } : r
+        ),
+        liquidaciones: state.liquidaciones.filter(
+          (l) => l.tarjetaId !== action.payload
+        ),
+      };
+
+    case "SET_LIQUIDACION": {
+      const existing = state.liquidaciones.findIndex(
+        (l) =>
+          l.tarjetaId === action.payload.tarjetaId &&
+          l.month === action.payload.month &&
+          l.year === action.payload.year
+      );
+      const liquidaciones = [...state.liquidaciones];
+      if (existing >= 0) {
+        liquidaciones[existing] = action.payload;
+      } else {
+        liquidaciones.push(action.payload);
+      }
+      return { ...state, liquidaciones };
+    }
+
+    case "DELETE_LIQUIDACION":
+      return {
+        ...state,
+        liquidaciones: state.liquidaciones.filter(
+          (l) =>
+            !(
+              l.tarjetaId === action.payload.tarjetaId &&
+              l.month === action.payload.month &&
+              l.year === action.payload.year
+            )
+        ),
+      };
+
     default:
       return state;
   }
@@ -149,6 +217,21 @@ interface FinanceContextValue {
     byCategory: Record<Category, number>;
   };
   getUpcomingEvents: () => UpcomingEvent[];
+  addTarjeta: (
+    data: Omit<Tarjeta, "id" | "createdAt" | "isActive"> & { isActive?: boolean }
+  ) => Promise<Tarjeta>;
+  updateTarjeta: (id: string, updates: Partial<Tarjeta>) => Promise<void>;
+  deleteTarjeta: (id: string) => Promise<void>;
+  /** Marca/actualiza la liquidación (pago) de una tarjeta para un periodo. */
+  setLiquidacion: (liq: Omit<Liquidacion, "id" | "createdAt">) => Promise<void>;
+  /** Borra la liquidación de un periodo (deja la tarjeta como pendiente). */
+  clearLiquidacion: (
+    tarjetaId: string,
+    month: number,
+    year: number
+  ) => Promise<void>;
+  /** Estado de liquidación de todas las tarjetas para un periodo. */
+  getTarjetasStatus: (month: number, year: number) => TarjetaMonthStatus[];
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -158,16 +241,31 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function load() {
-      const [records, recurringEvents, monthConfigs, budgets] =
-        await Promise.all([
-          recordsStore.fetchRecords(),
-          recurringStore.fetchRecurringEvents(),
-          recurringStore.fetchMonthConfigs(),
-          budgetsStore.fetchBudgets(),
-        ]);
+      const [
+        records,
+        recurringEvents,
+        monthConfigs,
+        budgets,
+        tarjetas,
+        liquidaciones,
+      ] = await Promise.all([
+        recordsStore.fetchRecords(),
+        recurringStore.fetchRecurringEvents(),
+        recurringStore.fetchMonthConfigs(),
+        budgetsStore.fetchBudgets(),
+        cardsStore.fetchTarjetas(),
+        cardsStore.fetchLiquidaciones(),
+      ]);
       dispatch({
         type: "INIT",
-        payload: { records, recurringEvents, monthConfigs, budgets },
+        payload: {
+          records,
+          recurringEvents,
+          monthConfigs,
+          budgets,
+          tarjetas,
+          liquidaciones,
+        },
       });
     }
     load().catch(() => toast.error("Error cargando datos"));
@@ -265,6 +363,63 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     return getUpcomingRecurringEvents(state.recurringEvents, state.monthConfigs);
   }, [state.recurringEvents, state.monthConfigs]);
 
+  const addTarjeta = useCallback(
+    async (
+      data: Omit<Tarjeta, "id" | "createdAt" | "isActive"> & {
+        isActive?: boolean;
+      }
+    ) => {
+      const saved = await cardsStore.insertTarjeta(data);
+      dispatch({ type: "ADD_TARJETA", payload: saved });
+      return saved;
+    },
+    []
+  );
+
+  const updateTarjeta = useCallback(
+    async (id: string, updates: Partial<Tarjeta>) => {
+      const saved = await cardsStore.updateTarjeta(id, updates);
+      dispatch({ type: "UPDATE_TARJETA", payload: saved });
+    },
+    []
+  );
+
+  const deleteTarjeta = useCallback(async (id: string) => {
+    await cardsStore.deleteTarjeta(id);
+    dispatch({ type: "DELETE_TARJETA", payload: id });
+  }, []);
+
+  const setLiquidacion = useCallback(
+    async (liq: Omit<Liquidacion, "id" | "createdAt">) => {
+      const saved = await cardsStore.upsertLiquidacion(liq);
+      dispatch({ type: "SET_LIQUIDACION", payload: saved });
+    },
+    []
+  );
+
+  const clearLiquidacion = useCallback(
+    async (tarjetaId: string, month: number, year: number) => {
+      await cardsStore.deleteLiquidacion(tarjetaId, month, year);
+      dispatch({
+        type: "DELETE_LIQUIDACION",
+        payload: { tarjetaId, month, year },
+      });
+    },
+    []
+  );
+
+  const getTarjetasStatus = useCallback(
+    (month: number, year: number) =>
+      getTarjetasMonthStatus(
+        state.tarjetas,
+        state.records,
+        state.liquidaciones,
+        month,
+        year
+      ),
+    [state.tarjetas, state.records, state.liquidaciones]
+  );
+
   return (
     <FinanceContext.Provider
       value={{
@@ -279,6 +434,12 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         updateBudget,
         getMonthSummary,
         getUpcomingEvents,
+        addTarjeta,
+        updateTarjeta,
+        deleteTarjeta,
+        setLiquidacion,
+        clearLiquidacion,
+        getTarjetasStatus,
       }}
     >
       {children}
