@@ -45,7 +45,9 @@ const mcpHandler = createMcpHandler(
       "tarjetas con crear_tarjeta, listar_tarjetas, actualizar_tarjeta (isActive=false " +
       "para archivar) y borrar_tarjeta. Al registrar un gasto puedes indicar la tarjeta " +
       "con tarjetaId en crear_gasto (sin tarjeta = débito/efectivo); el gasto sigue " +
-      "contando en su rubro, la tarjeta solo agrupa para la liquidación. estado_tarjetas " +
+      "contando en su rubro, la tarjeta solo agrupa para la liquidación. Para cambiar la " +
+      "tarjeta de un gasto ya registrado, o desvincularla (tarjetaId=null), sin borrarlo " +
+      "y recrearlo usa asignar_tarjeta_a_gasto. estado_tarjetas " +
       "muestra, por periodo (mes/año), cuánto se gastó con cada tarjeta (owed) y si está " +
       "liquidado o pendiente. liquidar_tarjeta_mes marca un periodo como pagado " +
       "(pagado=true, importe por defecto = lo gastado) o pendiente (pagado=false). La " +

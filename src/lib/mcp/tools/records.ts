@@ -1,7 +1,21 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { fetchRecords, insertRecord, deleteRecord } from "@/store/records-store";
-import { ok, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/shared";
+import {
+  fetchRecords,
+  insertRecord,
+  updateRecord,
+  deleteRecord,
+} from "@/store/records-store";
+import { fetchTarjetas } from "@/store/cards-store";
+import {
+  ok,
+  fail,
+  guard,
+  today,
+  zCategory,
+  zUserId,
+  zRecordType,
+} from "@/lib/mcp/shared";
 
 /** Tools over `finance_records` (gastos e ingresos). */
 export function registerRecordTools(server: McpServer): void {
@@ -117,6 +131,49 @@ export function registerRecordTools(server: McpServer): void {
           0
         );
         return ok({ count: records.length, totalGastos: total, records });
+      });
+    }
+  );
+
+  server.tool(
+    "asignar_tarjeta_a_gasto",
+    "Cambia la tarjeta (medio de pago) de un gasto YA registrado en " +
+      "finance_records, sin tener que borrarlo y recrearlo. Pasa tarjetaId para " +
+      "asignar o cambiar la tarjeta, o null para desvincularla (vuelve a " +
+      "débito/efectivo). Solo cambia la agrupación para la liquidación mensual " +
+      "(ver estado_tarjetas); el gasto sigue contando en su rubro. Como un gasto " +
+      "con tarjeta no mueve la cuenta hasta liquidar, al asignar una tarjeta se " +
+      "limpia su cuentaId. Solo aplica a registros type='gasto'.",
+    {
+      id: z.string().uuid().describe("ID (uuid) del gasto a editar"),
+      tarjetaId: z
+        .string()
+        .uuid()
+        .nullable()
+        .describe(
+          "ID de la tarjeta a asignar/cambiar, o null para desvincular (débito/efectivo)."
+        ),
+    },
+    async ({ id, tarjetaId }) => {
+      return guard(async () => {
+        const records = await fetchRecords();
+        const record = records.find((r) => r.id === id);
+        if (!record) return fail(`No existe un registro con id ${id}`);
+        if (record.type !== "gasto")
+          return fail("Solo los gastos pueden tener una tarjeta asignada");
+        if (tarjetaId) {
+          const tarjetas = await fetchTarjetas();
+          if (!tarjetas.some((t) => t.id === tarjetaId))
+            return fail(`No existe una tarjeta con id ${tarjetaId}`);
+        }
+        const updated = await updateRecord(id, {
+          // Presencia de la clave = asignar (uuid) o limpiar (null).
+          tarjetaId: tarjetaId ?? undefined,
+          // Con tarjeta el gasto no mueve la cuenta hasta liquidar; sin tarjeta
+          // conserva su cuenta de débito/efectivo si la tenía.
+          cuentaId: tarjetaId ? undefined : record.cuentaId,
+        });
+        return ok(updated);
       });
     }
   );
