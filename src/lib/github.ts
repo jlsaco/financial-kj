@@ -80,6 +80,23 @@ export async function listIssues(
   return raw.filter((i) => !i.pull_request).map(toIssue);
 }
 
+/** Fetches a single issue by its number. */
+export async function getIssue(issueNumber: number): Promise<Issue> {
+  const url = `${GITHUB_API}/repos/${OWNER}/${REPO}/issues/${issueNumber}`;
+
+  const res = await fetch(url, {
+    headers: headers(),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${detail}`);
+  }
+
+  return toIssue((await res.json()) as GitHubApiIssue);
+}
+
 /** Creates a new issue in the configured repository. */
 export async function createIssue(input: {
   title: string;
@@ -95,6 +112,55 @@ export async function createIssue(input: {
       title: input.title,
       body: input.body,
       labels: [KIND_LABEL[input.kind]],
+    }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${detail}`);
+  }
+
+  return toIssue((await res.json()) as GitHubApiIssue);
+}
+
+/** Adds a comment to an existing issue. Returns the new comment's url. */
+export async function addIssueComment(
+  issueNumber: number,
+  body: string
+): Promise<{ id: number; url: string }> {
+  const url = `${GITHUB_API}/repos/${OWNER}/${REPO}/issues/${issueNumber}/comments`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ body }),
+  });
+
+  if (!res.ok) {
+    const detail = await res.text();
+    throw new Error(`GitHub API ${res.status}: ${detail}`);
+  }
+
+  const raw = (await res.json()) as { id: number; html_url: string };
+  return { id: raw.id, url: raw.html_url };
+}
+
+/** Opens or closes an issue. For closed issues a reason can be set. */
+export async function setIssueState(
+  issueNumber: number,
+  state: "open" | "closed",
+  stateReason?: "completed" | "not_planned"
+): Promise<Issue> {
+  const url = `${GITHUB_API}/repos/${OWNER}/${REPO}/issues/${issueNumber}`;
+
+  const res = await fetch(url, {
+    method: "PATCH",
+    headers: headers(),
+    body: JSON.stringify({
+      state,
+      ...(state === "closed" && stateReason
+        ? { state_reason: stateReason }
+        : {}),
     }),
   });
 
