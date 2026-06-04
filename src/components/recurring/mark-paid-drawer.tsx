@@ -20,6 +20,7 @@ import {
   Plus,
   Link2,
   Search,
+  Wallet,
 } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { useFinance } from "@/contexts/finance-context";
@@ -70,12 +71,20 @@ export function MarkPaidDrawer({
   const [category, setCategory] = useState<Category>(event.category);
   const [userId, setUserId] = useState<UserId>(event.userId);
   const [date, setDate] = useState(dueDateString(event, month, year));
+  // Medio de pago: tarjeta (solo gastos) o cuenta (ingresos y gastos sin tarjeta).
+  const [tarjetaId, setTarjetaId] = useState<string | undefined>(event.tarjetaId);
+  const [cuentaId, setCuentaId] = useState<string | undefined>(undefined);
 
   // --- Camino (b): buscar registro existente del mismo mes ---
   const [search, setSearch] = useState("");
 
   const isIncome = event.type === "ingreso";
   const recordWord = isIncome ? "ingreso" : "gasto";
+
+  const tarjetas = state.tarjetas.filter((t) => t.isActive);
+  const cuentas = state.cuentas.filter((c) => c.isActive);
+  // La cuenta aplica a ingresos y a gastos de débito/efectivo (sin tarjeta).
+  const showCuenta = isIncome || !tarjetaId;
 
   useEffect(() => {
     if (open) {
@@ -85,6 +94,8 @@ export function MarkPaidDrawer({
       setCategory(event.category);
       setUserId(event.userId);
       setDate(dueDateString(event, month, year));
+      setTarjetaId(event.tarjetaId);
+      setCuentaId(undefined);
       setSearch("");
     }
   }, [open, event, month, year, monthAmount]);
@@ -113,6 +124,10 @@ export function MarkPaidDrawer({
     }
     setSaving(true);
     try {
+      // La tarjeta (medio de pago) solo aplica a gastos.
+      const effTarjetaId = isIncome ? undefined : tarjetaId;
+      // La cuenta aplica a ingresos y a gastos de débito/efectivo (sin tarjeta).
+      const effCuentaId = showCuenta ? cuentaId : undefined;
       // 1) Crear el registro vinculado al recurrente, heredando su tipo
       //    (gasto o ingreso) para que los recurrentes de ingreso generen ingresos.
       const saved = await addRecord({
@@ -123,6 +138,8 @@ export function MarkPaidDrawer({
         userId,
         date,
         recurringEventId: event.id,
+        tarjetaId: effTarjetaId,
+        cuentaId: effCuentaId,
       });
       // 2) Marcar la cuota del mes como pagada, apuntando al registro creado.
       //    Si el upsert falla, hacemos rollback del registro recién creado
@@ -279,6 +296,87 @@ export function MarkPaidDrawer({
                   onChange={(e) => setDate(e.target.value)}
                 />
               </div>
+
+              {/* Tarjeta (medio de pago) — solo para gastos */}
+              {!isIncome && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                    Pagado con
+                  </Label>
+                  {tarjetas.length === 0 ? (
+                    <p className="text-[13px] text-muted-foreground/70">
+                      Sin tarjetas. Créalas en la pestaña Tarjetas para agruparlas
+                      en la liquidación mensual.
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTarjetaId(undefined)}
+                        className={`rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                          tarjetaId === undefined
+                            ? "bg-foreground text-background shadow-sm"
+                            : "border border-border/60 text-muted-foreground hover:border-border"
+                        }`}
+                      >
+                        Débito / efectivo
+                      </button>
+                      {tarjetas.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() => setTarjetaId(t.id)}
+                          className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                            tarjetaId === t.id
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "border border-border/60 text-muted-foreground hover:border-border"
+                          }`}
+                        >
+                          <CreditCard className="h-4 w-4" strokeWidth={1.5} />
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Cuenta — ingresos (cuenta destino) y gastos de débito/efectivo */}
+              {showCuenta && cuentas.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                    {isIncome ? "Entra a la cuenta" : "Sale de la cuenta"}
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCuentaId(undefined)}
+                      className={`rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                        cuentaId === undefined
+                          ? "bg-foreground text-background shadow-sm"
+                          : "border border-border/60 text-muted-foreground hover:border-border"
+                      }`}
+                    >
+                      Sin cuenta
+                    </button>
+                    {cuentas.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setCuentaId(c.id)}
+                        className={`flex items-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                          cuentaId === c.id
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "border border-border/60 text-muted-foreground hover:border-border"
+                        }`}
+                      >
+                        <Wallet className="h-4 w-4" strokeWidth={1.5} />
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>

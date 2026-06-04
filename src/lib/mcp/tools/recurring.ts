@@ -8,6 +8,9 @@ import {
   upsertMonthConfig,
   deleteRecurringEvent,
 } from "@/store/recurring-store";
+import { insertRecord } from "@/store/records-store";
+import { fetchTarjetas } from "@/store/cards-store";
+import { fetchCuentas } from "@/store/cuentas-store";
 import { computeDebtEndDate } from "@/lib/debt-helpers";
 import { classifyRecurringEvents } from "@/lib/date-helpers";
 import { ok, fail, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/shared";
@@ -353,8 +356,13 @@ export function registerRecurringTools(server: McpServer): void {
   server.tool(
     "registrar_pago_mes",
     "Registra/actualiza el pago de un recurrente para un mes concreto (month_payment_configs, " +
-      "upsert por evento+mes+año). Opcionalmente vincula la cuota a un finance_record " +
-      "existente vía recordId.",
+      "upsert por evento+mes+año). Si NO se pasa recordId y la cuota queda pagada (isPaid=true), " +
+      "crea automáticamente el finance_record de esa cuota (heredando nombre/categoría/tipo/" +
+      "responsable del recurrente, igual que crear_gasto/crear_ingreso) y lo vincula. " +
+      "Opcionalmente vincula la cuota a un finance_record EXISTENTE vía recordId (en ese caso no " +
+      "se crea uno nuevo y tarjetaId/cuentaId se ignoran). Al crear el registro se puede asignar " +
+      "el medio de pago: tarjetaId para gastos pagados con tarjeta, o cuentaId para la cuenta " +
+      "bancaria (débito/efectivo en gastos, o cuenta destino en ingresos).",
     {
       recurringEventId: z.string().uuid().describe("ID del evento recurrente"),
       month: z.number().int().min(1).max(12),
@@ -369,21 +377,98 @@ export function registerRecurringTools(server: McpServer): void {
         .uuid()
         .optional()
         .describe(
-          "ID (uuid) de un finance_record existente al que se vincula esta cuota (opcional)"
+          "ID (uuid) de un finance_record existente al que se vincula esta cuota. Si se pasa, " +
+            "no se crea un registro nuevo y tarjetaId/cuentaId se ignoran (opcional)."
+        ),
+      tarjetaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "Solo GASTOS: tarjeta (medio de pago) con la que se pagó la cuota. Se aplica al " +
+            "finance_record creado automáticamente. Se ignora en ingresos y si se pasa recordId. " +
+            "Si se envía, se limpia cuentaId (un gasto con tarjeta no mueve la cuenta hasta liquidar)."
+        ),
+      cuentaId: z
+        .string()
+        .uuid()
+        .optional()
+        .describe(
+          "Cuenta bancaria: en GASTOS de débito/efectivo (sin tarjeta) la cuenta de la que sale el " +
+            "dinero; en INGRESOS la cuenta destino a la que entra. Se aplica al finance_record creado " +
+            "automáticamente. Se ignora si se pasa recordId o si se envía tarjetaId en un gasto."
         ),
       note: z.string().optional(),
     },
-    async ({ recurringEventId, month, year, amount, isPaid, paidDate, recordId, note }) => {
+    async ({
+      recurringEventId,
+      month,
+      year,
+      amount,
+      isPaid,
+      paidDate,
+      recordId,
+      tarjetaId,
+      cuentaId,
+      note,
+    }) => {
       return guard(async () => {
         const paid = isPaid ?? false;
+        const effPaidDate = paid ? paidDate ?? today() : undefined;
+
+        // Validamos las referencias de medio de pago/cuenta antes de usarlas.
+        if (tarjetaId) {
+          const tarjetas = await fetchTarjetas();
+          if (!tarjetas.some((t) => t.id === tarjetaId))
+            return fail(`No existe una tarjeta con id ${tarjetaId}`);
+        }
+        if (cuentaId) {
+          const cuentas = await fetchCuentas();
+          if (!cuentas.some((c) => c.id === cuentaId))
+            return fail(`No existe una cuenta con id ${cuentaId}`);
+        }
+
+        let linkedRecordId = recordId;
+
+        // Si la cuota queda pagada y no se vincula a un registro existente,
+        // creamos el finance_record de la cuota (igual que hace la UI), heredando
+        // los datos del recurrente y propagando el medio de pago/cuenta.
+        if (paid && !recordId) {
+          const event = (await fetchRecurringEvents()).find(
+            (e) => e.id === recurringEventId
+          );
+          if (!event)
+            return fail(`No existe un recurrente con id ${recurringEventId}`);
+
+          const isIncome = event.type === "ingreso";
+          // La tarjeta solo aplica a gastos.
+          const effTarjetaId = isIncome ? undefined : tarjetaId;
+          // En un gasto con tarjeta no se mueve la cuenta hasta liquidar (coherencia
+          // con records.ts): si hay tarjeta, se limpia la cuenta.
+          const effCuentaId = effTarjetaId ? undefined : cuentaId;
+
+          const record = await insertRecord({
+            name: event.name,
+            amount,
+            category: event.category,
+            userId: event.userId,
+            type: event.type,
+            date: effPaidDate ?? today(),
+            recurringEventId: event.id,
+            tarjetaId: effTarjetaId,
+            cuentaId: effCuentaId,
+          });
+          linkedRecordId = record.id;
+        }
+
         const config = await upsertMonthConfig({
           recurringEventId,
           month,
           year,
           amount,
           isPaid: paid,
-          paidDate: paid ? paidDate ?? today() : undefined,
-          recordId,
+          paidDate: effPaidDate,
+          recordId: linkedRecordId,
           note,
         });
         return ok(config);
