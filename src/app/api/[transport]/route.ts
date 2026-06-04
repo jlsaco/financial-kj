@@ -73,7 +73,13 @@ const mcpHandler = createMcpHandler(
       "actualizar_recurrente; null desvincula). La cuota del mes de las deudas " +
       "vinculadas se suma a la liquidación de la tarjeta (estado_tarjetas la incluye en " +
       "owed). Así una tarjeta de pura deuda muestra su cuota fija y una tarjeta mixta " +
-      "suma la cuota de la deuda vieja más las compras nuevas del mes.",
+      "suma la cuota de la deuda vieja más las compras nuevas del mes. " +
+      "Issues (GitHub): bugs y mejoras del repositorio público de FinanceKJ. " +
+      "listar_issues lista los issues (filtrable por estado open/closed/all), " +
+      "ver_issue devuelve uno por su número, crear_issue abre uno nuevo " +
+      "(kind 'bug' o 'mejora'), comentar_issue añade un comentario y " +
+      "actualizar_estado_issue abre o cierra un issue (motivo completed/" +
+      "not_planned al cerrar). Cada issue incluye su url pública en GitHub.",
   },
   {
     basePath: "/api",
@@ -92,9 +98,16 @@ function withAuth(handler: (req: Request) => Promise<Response>) {
   return async (req: Request): Promise<Response> => {
     const expected = process.env.MCP_AUTH_TOKEN;
     if (!expected) return unauthorized();
+    // Dos formas de autenticar con el mismo secreto:
+    // - header `Authorization: Bearer <token>` (clientes que permiten headers, p.ej. CLI)
+    // - query param `?k=<token>` (clientes que solo aceptan una URL, p.ej. el conector
+    //   personalizado de la app móvil de Claude, que no permite añadir headers)
     const header = req.headers.get("authorization");
-    if (header !== `Bearer ${expected}`) return unauthorized();
-    return handler(req);
+    const urlToken = new URL(req.url).searchParams.get("k");
+    if (header === `Bearer ${expected}` || urlToken === expected) {
+      return handler(req);
+    }
+    return unauthorized();
   };
 }
 

@@ -45,6 +45,8 @@ desactualizado.
   - `recurring.ts` — gastos recurrentes (`recurring_events` / `month_payment_configs`)
   - `debts.ts` — deudas (registros con `category='deuda'`)
   - `summary.ts` — resúmenes y estado de presupuestos
+  - `issues.ts` — issues de GitHub (bugs/mejoras) del repo público vía
+    `src/lib/github.ts`
 - **Helpers compartidos:** `src/lib/mcp/shared.ts` — enums Zod (`zCategory`,
   `zUserId`, `zRecordType`), `today()`, y wrappers `ok` / `fail` / `guard`.
 
