@@ -11,6 +11,11 @@ import { ok, guard } from "@/lib/mcp/shared";
 
 const zIssueKind = z.enum(["bug", "mejora"]);
 
+/** Label que marca un issue para procesamiento/desarrollo automático por un
+ *  agente (pipeline de auto-merge). Se añade por defecto a los issues creados
+ *  vía MCP; se puede desactivar con `agentDevelop: false`. */
+const AGENT_DEVELOP_LABEL = "agent-develop";
+
 /**
  * Tools sobre los issues de GitHub del repositorio de FinanceKJ
  * (repo público `GITHUB_OWNER/GITHUB_REPO`, por defecto jlsaco/financial-kj).
@@ -62,9 +67,12 @@ export function registerIssueTools(server: McpServer): void {
   server.tool(
     "crear_issue",
     "Crea un nuevo issue en el repositorio de FinanceKJ. `kind` define la " +
-      "etiqueta: 'bug' (label bug) o 'mejora' (label enhancement). Devuelve el " +
-      "issue creado con su número y su `url` pública en GitHub. Requiere " +
-      "GITHUB_TOKEN configurado en el servidor.",
+      "etiqueta: 'bug' (label bug) o 'mejora' (label enhancement). Por defecto " +
+      "añade también el label 'agent-develop', que marca el issue para " +
+      "procesamiento/desarrollo automático por un agente (pipeline de " +
+      "auto-merge); usa agentDevelop=false para no añadirlo. Devuelve el issue " +
+      "creado con su número y su `url` pública en GitHub. Requiere GITHUB_TOKEN " +
+      "configurado en el servidor.",
     {
       title: z.string().min(1).describe("Título del issue"),
       body: z
@@ -72,10 +80,22 @@ export function registerIssueTools(server: McpServer): void {
         .optional()
         .describe("Descripción del issue (Markdown), opcional"),
       kind: zIssueKind.describe("'bug' o 'mejora' (define la etiqueta)"),
+      agentDevelop: z
+        .boolean()
+        .optional()
+        .describe(
+          "Añade el label 'agent-develop' para auto-procesamiento (por defecto true)"
+        ),
     },
-    async ({ title, body, kind }) => {
+    async ({ title, body, kind, agentDevelop }) => {
       return guard(async () => {
-        const issue = await createIssue({ title, body: body ?? "", kind });
+        const issue = await createIssue({
+          title,
+          body: body ?? "",
+          kind,
+          extraLabels:
+            agentDevelop === false ? [] : [AGENT_DEVELOP_LABEL],
+        });
         return ok(issue);
       });
     }

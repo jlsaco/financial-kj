@@ -97,13 +97,20 @@ export async function getIssue(issueNumber: number): Promise<Issue> {
   return toIssue((await res.json()) as GitHubApiIssue);
 }
 
-/** Creates a new issue in the configured repository. */
+/** Creates a new issue in the configured repository.
+ *  `extraLabels` se añaden además del label derivado de `kind` (GitHub crea los
+ *  que no existan al asignarlos). Se deduplican. */
 export async function createIssue(input: {
   title: string;
   body: string;
   kind: IssueKind;
+  extraLabels?: string[];
 }): Promise<Issue> {
   const url = `${GITHUB_API}/repos/${OWNER}/${REPO}/issues`;
+
+  const labels = Array.from(
+    new Set([KIND_LABEL[input.kind], ...(input.extraLabels ?? [])])
+  );
 
   const res = await fetch(url, {
     method: "POST",
@@ -111,7 +118,7 @@ export async function createIssue(input: {
     body: JSON.stringify({
       title: input.title,
       body: input.body,
-      labels: [KIND_LABEL[input.kind]],
+      labels,
     }),
   });
 
