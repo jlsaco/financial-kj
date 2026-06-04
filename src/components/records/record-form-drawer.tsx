@@ -24,6 +24,7 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useFinance } from "@/contexts/finance-context";
 import { Category, RecordType, UserId, FinanceRecord } from "@/types";
 import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
+import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 
 const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi };
@@ -39,7 +40,8 @@ export function RecordFormDrawer({
   onOpenChange,
   editRecord,
 }: RecordFormDrawerProps) {
-  const { addRecord, updateRecord, deleteRecord, state } = useFinance();
+  const { addRecord, updateRecord, deleteRecord, addCompraDiferida, state } =
+    useFinance();
   const [saving, setSaving] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -50,8 +52,13 @@ export function RecordFormDrawer({
   const [userId, setUserId] = useState<UserId>("jose");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [tarjetaId, setTarjetaId] = useState<string | undefined>(undefined);
+  // Compra diferida en cuotas (solo al crear un gasto nuevo).
+  const [deferred, setDeferred] = useState(false);
+  const [installments, setInstallments] = useState("");
+  const [interest, setInterest] = useState("");
 
   const tarjetas = state.tarjetas.filter((t) => t.isActive);
+  const canDefer = type === "gasto" && !editRecord;
 
   useEffect(() => {
     if (editRecord) {
@@ -71,12 +78,57 @@ export function RecordFormDrawer({
       setDate(new Date().toISOString().split("T")[0]);
       setTarjetaId(undefined);
     }
+    setDeferred(false);
+    setInstallments("");
+    setInterest("");
   }, [editRecord, open]);
+
+  const parsedInstallments = parseInt(installments, 10);
+  const suggestedCuota =
+    deferred &&
+    !isNaN(parseFloat(amount)) &&
+    parseFloat(amount) > 0 &&
+    !isNaN(parsedInstallments) &&
+    parsedInstallments > 0
+      ? parseFloat(amount) / parsedInstallments
+      : null;
 
   const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount);
     if (!name.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
       toast.error("Completa todos los campos correctamente");
+      return;
+    }
+
+    // Compra diferida en cuotas.
+    if (canDefer && deferred) {
+      if (isNaN(parsedInstallments) || parsedInstallments < 2) {
+        toast.error("Indica al menos 2 cuotas para diferir");
+        return;
+      }
+      setSaving(true);
+      try {
+        const parsedInterest = interest.trim() ? parseFloat(interest) : undefined;
+        await addCompraDiferida({
+          name: name.trim(),
+          category,
+          userId,
+          tarjetaId,
+          totalAmount: parsedAmount,
+          installmentsCount: parsedInstallments,
+          interestRate:
+            parsedInterest !== undefined && !isNaN(parsedInterest)
+              ? parsedInterest
+              : undefined,
+          startDate: date,
+        });
+        toast.success(`Compra diferida en ${parsedInstallments} cuotas`);
+        onOpenChange(false);
+      } catch {
+        toast.error("Error al guardar");
+      } finally {
+        setSaving(false);
+      }
       return;
     }
 
@@ -165,7 +217,9 @@ export function RecordFormDrawer({
 
             {/* Amount */}
             <div className="space-y-1.5">
-              <Label htmlFor="amount" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Valor</Label>
+              <Label htmlFor="amount" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                {deferred ? "Total de la compra" : "Valor"}
+              </Label>
               <Input
                 id="amount"
                 type="number"
@@ -269,6 +323,78 @@ export function RecordFormDrawer({
               </div>
             )}
 
+            {/* Diferir en cuotas — solo al crear un gasto */}
+            {canDefer && (
+              <div className="space-y-2.5 rounded-2xl border border-border/50 bg-muted/30 p-3">
+                <button
+                  type="button"
+                  onClick={() => setDeferred((v) => !v)}
+                  className="flex w-full items-center justify-between"
+                >
+                  <span className="text-[13px] font-semibold">
+                    Diferir en cuotas
+                  </span>
+                  <span
+                    className={`relative h-6 w-10 rounded-full transition-colors ${
+                      deferred ? "bg-primary" : "bg-border"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${
+                        deferred ? "left-[18px]" : "left-0.5"
+                      }`}
+                    />
+                  </span>
+                </button>
+
+                {deferred && (
+                  <div className="space-y-2.5 pt-1">
+                    <p className="text-xs text-muted-foreground/80">
+                      El total se reparte en N gastos mensuales (uno por mes desde
+                      la fecha), cada uno con esta tarjeta. Ideal para casa o viajes.
+                    </p>
+                    <div className="flex gap-2">
+                      <div className="flex-1 space-y-1.5">
+                        <Label htmlFor="installments" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                          Nº de cuotas
+                        </Label>
+                        <Input
+                          id="installments"
+                          type="number"
+                          placeholder="12"
+                          value={installments}
+                          onChange={(e) => setInstallments(e.target.value)}
+                          inputMode="numeric"
+                          min={2}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1.5">
+                        <Label htmlFor="interest" className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                          % interés (opc.)
+                        </Label>
+                        <Input
+                          id="interest"
+                          type="number"
+                          placeholder="0"
+                          value={interest}
+                          onChange={(e) => setInterest(e.target.value)}
+                          inputMode="decimal"
+                        />
+                      </div>
+                    </div>
+                    {suggestedCuota !== null && (
+                      <p className="text-[13px] font-medium text-foreground/80">
+                        Cuota mensual:{" "}
+                        <span className="font-bold tabular-nums">
+                          {formatCurrency(suggestedCuota)}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* User */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">Registrado por</Label>
@@ -277,8 +403,12 @@ export function RecordFormDrawer({
           </div>
 
           <DrawerFooter>
-            <Button onClick={handleSubmit} className="w-full h-11 rounded-xl font-semibold tracking-wide active:scale-[0.98] active:translate-y-[1px] transition-all">
-              {editRecord ? "Guardar cambios" : "Agregar registro"}
+            <Button onClick={handleSubmit} disabled={saving} className="w-full h-11 rounded-xl font-semibold tracking-wide active:scale-[0.98] active:translate-y-[1px] transition-all">
+              {editRecord
+                ? "Guardar cambios"
+                : deferred
+                ? "Crear compra diferida"
+                : "Agregar registro"}
             </Button>
             <Button
               variant="outline"

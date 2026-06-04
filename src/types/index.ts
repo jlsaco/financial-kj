@@ -47,6 +47,10 @@ export interface FinanceRecord {
   recurringEventId?: string;
   /** Tarjeta (medio de pago) con la que se pagó. undefined = débito/efectivo. */
   tarjetaId?: string;
+  /** Si es una cuota de una compra diferida, apunta a su padre. */
+  compraDiferidaId?: string;
+  /** Número de cuota (1..N) dentro de la compra diferida. */
+  installmentNo?: number;
 }
 
 export interface RecurringEvent {
@@ -83,6 +87,41 @@ export interface CategoryBudget {
   category: Category;
   monthlyBudget: number;
   updatedAt: string;
+}
+
+/**
+ * Compra grande diferida en cuotas (casa, viajes…). Genera N gastos hijos
+ * (uno por mes), cada uno con su tarjeta y fecha, de modo que cada cuota pesa
+ * solo en su mes (rubro + liquidación de la tarjeta).
+ */
+export interface CompraDiferida {
+  id: string;
+  name: string;
+  category: Category;
+  userId: UserId;
+  /** Tarjeta con la que se difiere. undefined = sin tarjeta. */
+  tarjetaId?: string;
+  /** Total a pagar (capital + intereses). La cuota = total ÷ cuotas. */
+  totalAmount: number;
+  installmentsCount: number;
+  /** % de interés (opcional, informativo). */
+  interestRate?: number;
+  /** Fecha de la primera cuota (YYYY-MM-DD). */
+  startDate: string;
+  createdAt: string;
+}
+
+/** Resumen de una compra diferida calculado a partir de sus cuotas (hijos). */
+export interface CompraDiferidaSummary {
+  compra: CompraDiferida;
+  installmentAmount: number;
+  paidCount: number;
+  remainingCount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  /** Próxima cuota no liquidada (fecha) o null si está todo pagado. */
+  nextDueDate: string | null;
+  endDate: string;
 }
 
 /** Tarjeta de crédito usada como medio de pago. */
