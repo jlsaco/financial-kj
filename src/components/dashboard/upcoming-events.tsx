@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useFinance } from "@/contexts/finance-context";
 import { CategoryBadge } from "@/components/shared/category-badge";
 import { formatCurrency } from "@/lib/formatters";
@@ -18,9 +19,10 @@ export function UpcomingEvents() {
       <ScrollArea className="w-full">
         <div className="flex gap-3 pb-2">
           {upcoming.map((item) => (
-            <div
+            <Link
               key={item.recurringEvent.id}
-              className={`min-w-[190px] shrink-0 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)] ${
+              href={`/recurrentes/${item.recurringEvent.id}`}
+              className={`block min-w-[190px] shrink-0 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_32px_-8px_rgba(0,0,0,0.08)] transition-all hover:bg-accent/40 active:scale-[0.99] ${
                 item.isOverdue
                   ? "bg-rose-500/5 ring-1 ring-inset ring-rose-500/40"
                   : "bg-card"
@@ -51,7 +53,7 @@ export function UpcomingEvents() {
                 category={item.recurringEvent.category}
                 className="mt-2"
               />
-            </div>
+            </Link>
           ))}
         </div>
         <ScrollBar orientation="horizontal" />
