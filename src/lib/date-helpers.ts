@@ -83,8 +83,8 @@ export function getUpcomingRecurringEvents(
     // posterior: en ese caso apunta a la primera cuota y nunca cuenta vencido.
     let dueDate = resolveDueDate(event, currentMonth, currentYear);
 
-    // ¿Ya está pagado este mes? Lo usamos para decidir si un recurrente vencido
-    // se mantiene resaltado (sin pagar) o se adelanta al próximo mes (ya pagado).
+    // ¿Ya está pagado este mes? Si lo está, la cuota del mes en curso ya no es
+    // un próximo pago y adelantamos el vencimiento al próximo mes.
     const currentConfig = configs.find(
       (c) =>
         c.recurringEventId === event.id &&
@@ -93,24 +93,26 @@ export function getUpcomingRecurringEvents(
     );
     const paidThisMonth = currentConfig?.isPaid ?? false;
 
+    // Si ya está pagado este mes, la cuota del mes en curso está saldada y no
+    // debe aparecer en "próximos pagos" (ni vencida ni próxima). Mostramos en su
+    // lugar el vencimiento del próximo mes, que aún está pendiente.
+    if (paidThisMonth) {
+      const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+      const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
+      const nextEffectiveDay = getEffectiveDayOfMonth(
+        event.dayOfMonth,
+        nextMonth,
+        nextYear
+      );
+      dueDate = new Date(nextYear, nextMonth - 1, nextEffectiveDay);
+      dueDate.setHours(0, 0, 0, 0);
+    }
+
     let isOverdue = false;
 
+    // Vencido y sin pagar: lo mantenemos resaltado en su mes.
     if (dueDate < today) {
-      if (paidThisMonth) {
-        // Ya pagado: mostramos el vencimiento del próximo mes.
-        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-        const nextYear = currentMonth === 12 ? currentYear + 1 : currentYear;
-        const nextEffectiveDay = getEffectiveDayOfMonth(
-          event.dayOfMonth,
-          nextMonth,
-          nextYear
-        );
-        dueDate = new Date(nextYear, nextMonth - 1, nextEffectiveDay);
-        dueDate.setHours(0, 0, 0, 0);
-      } else {
-        // Vencido y sin pagar: lo mantenemos resaltado en su mes.
-        isOverdue = true;
-      }
+      isOverdue = true;
     }
 
     const daysUntilDue = Math.ceil(
