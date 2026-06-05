@@ -1,3 +1,10 @@
+## [0.1.31](https://github.com/jlsaco/financial-kj/compare/v0.1.30...v0.1.31) (2026-06-05)
+
+
+### Bug Fixes
+
+* **home:** no mostrar recurrentes ya pagados en próximos pagos ([#59](https://github.com/jlsaco/financial-kj/issues/59)) ([#61](https://github.com/jlsaco/financial-kj/issues/61)) ([55494f2](https://github.com/jlsaco/financial-kj/commit/55494f28764970f12dfd1d1768309bfdb194d80c))
+
 ## [0.1.30](https://github.com/jlsaco/financial-kj/compare/v0.1.29...v0.1.30) (2026-06-05)
 
 
