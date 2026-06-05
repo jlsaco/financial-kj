@@ -1,3 +1,10 @@
+## [0.1.32](https://github.com/jlsaco/financial-kj/compare/v0.1.31...v0.1.32) (2026-06-05)
+
+
+### Features
+
+* **home:** navegar al detalle del recurrente al tocar un próximo pago ([#60](https://github.com/jlsaco/financial-kj/issues/60)) ([#62](https://github.com/jlsaco/financial-kj/issues/62)) ([e5bcad3](https://github.com/jlsaco/financial-kj/commit/e5bcad3520aae462871c92c51a758fc62249fb64))
+
 ## [0.1.31](https://github.com/jlsaco/financial-kj/compare/v0.1.30...v0.1.31) (2026-06-05)
 
 
