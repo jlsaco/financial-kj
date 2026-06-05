@@ -203,19 +203,23 @@ export interface Liquidacion {
 }
 
 /**
- * Estado de liquidación de una tarjeta en un mes (computado en la UI/MCP):
- * cuánto se gastó con la tarjeta ese mes y si ya se liquidó.
+ * Estado de una tarjeta en un mes (computado en la UI/MCP). Separa el gasto
+ * REAL ya registrado de la PROYECCIÓN de recurrentes aún sin registrar (#57).
  */
 export interface TarjetaMonthStatus {
   tarjeta: Tarjeta;
   month: number;
   year: number;
-  /** Total a liquidar: gastos del periodo + cuota de deudas vinculadas (F4). */
+  /** Gastado real: solo `finance_records` ya registrados con la tarjeta. */
   owed: number;
-  /** Nº de gastos del periodo. */
+  /** Nº de gastos reales registrados en el periodo. */
   recordsCount: number;
-  /** Parte de `owed` que proviene de cuotas de deudas vinculadas (F4). */
-  debtCuota: number;
+  /** Proyección: cuotas de recurrentes vinculados aún NO registrados este mes. */
+  pendingCuota: number;
+  /** Nº de recurrentes pendientes incluidos en la proyección. */
+  pendingCount: number;
+  /** Total proyectado = `owed + pendingCuota` (si se pagan los pendientes). */
+  proyectado: number;
   /** Liquidación registrada para el periodo (si existe). */
   liquidacion: Liquidacion | null;
   /** true si hay liquidación con isPaid. */

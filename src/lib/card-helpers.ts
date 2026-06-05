@@ -46,12 +46,18 @@ function ymIndex(month: number, year: number): number {
 }
 
 /**
- * Cuota del periodo de las deudas/recurrentes vinculados a una tarjeta (F4).
+ * Proyección del periodo: cuotas de los recurrentes/deudas vinculados a una
+ * tarjeta que AÚN NO se han registrado como pago del mes (F4).
+ *
+ * Solo cuentan los recurrentes pendientes: cuando una cuota se registra como
+ * pagada (`MonthPaymentConfig.isPaid`) deja de ser proyección y pasa a ser un
+ * `finance_record` real (sumado en `tarjetaOwedForMonth`). Así no se mezcla el
+ * gasto real con la proyección ni se cuenta dos veces.
  * - Deudas con cuotas (installmentsCount): usa el cronograma; la cuota es el
  *   monto configurado del mes o, en su defecto, total ÷ cuotas.
  * - Recurrentes simples: su monto del mes si está activo dentro del rango.
  */
-export function tarjetaDebtCuotaForMonth(
+export function tarjetaPendingCuotaForMonth(
   tarjetaId: string,
   recurringEvents: RecurringEvent[],
   monthConfigs: MonthPaymentConfig[],
@@ -67,6 +73,8 @@ export function tarjetaDebtCuotaForMonth(
     const configFor = monthConfigs.find(
       (c) => c.recurringEventId === ev.id && c.month === month && c.year === year
     );
+    // Ya registrado este mes: salió de la proyección y es un gasto real.
+    if (configFor?.isPaid) continue;
 
     if (ev.installmentsCount && ev.installmentsCount > 0) {
       // Deuda con cuotas: ¿el periodo cae dentro del cronograma?
@@ -94,9 +102,12 @@ export function tarjetaDebtCuotaForMonth(
 }
 
 /**
- * Estado de liquidación de una tarjeta en un periodo: cuánto hay que liquidar
- * (gastos del mes + cuotas de deudas vinculadas) y si ya quedó pagada.
- * Pendiente = sin liquidación o is_paid=false.
+ * Estado de una tarjeta en un periodo. Separa el gasto REAL de la PROYECCIÓN:
+ * - `owed`: solo lo ya registrado en `finance_records` con esa tarjeta (gastado).
+ * - `pendingCuota`: cuotas de recurrentes vinculados aún sin registrar.
+ * - `proyectado`: `owed + pendingCuota` (lo que se espera liquidar si se pagan
+ *   todos los recurrentes pendientes del mes).
+ * Pendiente de liquidar = sin liquidación o is_paid=false.
  */
 export function getTarjetaMonthStatus(
   tarjeta: Tarjeta,
@@ -113,13 +124,14 @@ export function getTarjetaMonthStatus(
     month,
     year
   );
-  const { amount: debtCuota, count: debtCount } = tarjetaDebtCuotaForMonth(
-    tarjeta.id,
-    recurringEvents,
-    monthConfigs,
-    month,
-    year
-  );
+  const { amount: pendingCuota, count: pendingCount } =
+    tarjetaPendingCuotaForMonth(
+      tarjeta.id,
+      recurringEvents,
+      monthConfigs,
+      month,
+      year
+    );
   const liquidacion =
     liquidaciones.find(
       (l) => l.tarjetaId === tarjeta.id && l.month === month && l.year === year
@@ -128,9 +140,11 @@ export function getTarjetaMonthStatus(
     tarjeta,
     month,
     year,
-    owed: recordsOwed + debtCuota,
-    recordsCount: count + debtCount,
-    debtCuota,
+    owed: recordsOwed,
+    recordsCount: count,
+    pendingCuota,
+    pendingCount,
+    proyectado: recordsOwed + pendingCuota,
     liquidacion,
     isPaid: liquidacion?.isPaid ?? false,
   };

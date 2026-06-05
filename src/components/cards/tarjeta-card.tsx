@@ -17,7 +17,17 @@ interface TarjetaCardProps {
 export function TarjetaCard({ status, onEdit }: TarjetaCardProps) {
   const { setLiquidacion, clearLiquidacion } = useFinance();
   const [busy, setBusy] = useState(false);
-  const { tarjeta, owed, recordsCount, debtCuota, isPaid, month, year } = status;
+  const {
+    tarjeta,
+    owed,
+    recordsCount,
+    pendingCuota,
+    pendingCount,
+    proyectado,
+    isPaid,
+    month,
+    year,
+  } = status;
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -103,9 +113,15 @@ export function TarjetaCard({ status, onEdit }: TarjetaCardProps) {
           <p className="text-xs text-muted-foreground/70">
             {recordsCount} {recordsCount === 1 ? "gasto" : "gastos"}
           </p>
-          {debtCuota > 0 && (
-            <p className="text-xs text-muted-foreground/70">
-              incluye {formatCurrency(debtCuota)} de cuota de deuda
+          {pendingCuota > 0 && (
+            <p className="mt-1 text-xs font-medium text-amber-600/90">
+              + {formatCurrency(pendingCuota)} proyectados ({pendingCount}{" "}
+              {pendingCount === 1 ? "recurrente" : "recurrentes"} pend.)
+            </p>
+          )}
+          {pendingCuota > 0 && (
+            <p className="text-xs text-muted-foreground/60">
+              Proyección: {formatCurrency(proyectado)}
             </p>
           )}
         </div>
