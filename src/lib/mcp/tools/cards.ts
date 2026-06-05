@@ -14,10 +14,7 @@ import {
   fetchRecurringEvents,
   fetchMonthConfigs,
 } from "@/store/recurring-store";
-import {
-  getTarjetasMonthStatus,
-  tarjetaDebtCuotaForMonth,
-} from "@/lib/card-helpers";
+import { getTarjetasMonthStatus } from "@/lib/card-helpers";
 import { ok, fail, guard, today, zCategory, zUserId } from "@/lib/mcp/shared";
 
 /** Mes/año actual a partir de today() (YYYY-MM-DD). */
@@ -148,8 +145,12 @@ export function registerCardTools(server: McpServer): void {
   server.tool(
     "estado_tarjetas",
     "Liquidación mensual: para un periodo (mes/año, por defecto el actual) " +
-      "devuelve, por cada tarjeta, cuánto se gastó con ella (owed), cuántos " +
-      "gastos fueron, y si el periodo ya está liquidado (isPaid) o pendiente.",
+      "devuelve, por cada tarjeta, el gasto REAL ya registrado con ella (owed) y " +
+      "cuántos gastos fueron (recordsCount); la PROYECCIÓN de cuotas de " +
+      "recurrentes vinculados aún sin registrar (pendingCuota, pendingCount) y el " +
+      "total proyectado (proyectado = owed + pendingCuota); y si el periodo ya " +
+      "está liquidado (isPaid) o pendiente. owed solo cuenta finance_records: al " +
+      "registrar el pago de un recurrente su cuota pasa de pendingCuota a owed.",
     {
       month: z
         .number()
@@ -197,10 +198,18 @@ export function registerCardTools(server: McpServer): void {
           y
         );
         const totalOwed = status.reduce((s, t) => s + t.owed, 0);
+        const totalProyectado = status.reduce((s, t) => s + t.proyectado, 0);
         const totalPendiente = status
           .filter((t) => !t.isPaid)
           .reduce((s, t) => s + t.owed, 0);
-        return ok({ month: m, year: y, totalOwed, totalPendiente, tarjetas: status });
+        return ok({
+          month: m,
+          year: y,
+          totalOwed,
+          totalProyectado,
+          totalPendiente,
+          tarjetas: status,
+        });
       });
     }
   );
@@ -252,26 +261,16 @@ export function registerCardTools(server: McpServer): void {
 
         let resolvedAmount = amount;
         if (resolvedAmount === undefined) {
-          const [records, recurringEvents, monthConfigs] = await Promise.all([
-            fetchRecords(),
-            fetchRecurringEvents(),
-            fetchMonthConfigs(),
-          ]);
-          const gastos = records
+          // Por defecto se liquida solo el gasto REAL ya registrado con la
+          // tarjeta (no la proyección de recurrentes aún sin registrar, #57).
+          const records = await fetchRecords();
+          resolvedAmount = records
             .filter((r) => {
               if (r.type !== "gasto" || r.tarjetaId !== tarjetaId) return false;
               const [ry, rm] = r.date.split("-").map(Number);
               return ry === year && rm === month;
             })
             .reduce((s, r) => s + r.amount, 0);
-          const { amount: debtCuota } = tarjetaDebtCuotaForMonth(
-            tarjetaId,
-            recurringEvents,
-            monthConfigs,
-            month,
-            year
-          );
-          resolvedAmount = gastos + debtCuota;
         }
 
         const liquidacion = await upsertLiquidacion({
