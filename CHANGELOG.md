@@ -1,3 +1,10 @@
+## [0.1.33](https://github.com/jlsaco/financial-kj/compare/v0.1.32...v0.1.33) (2026-06-06)
+
+
+### Features
+
+* **recurrentes:** mostrar valor de próxima cuota en la lista ([#63](https://github.com/jlsaco/financial-kj/issues/63)) ([0f3f5f2](https://github.com/jlsaco/financial-kj/commit/0f3f5f2948251ac285df0e0e6290df90d71772d4))
+
 ## [0.1.32](https://github.com/jlsaco/financial-kj/compare/v0.1.31...v0.1.32) (2026-06-05)
 
 
