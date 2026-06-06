@@ -11,7 +11,11 @@ import {
 import { insertRecord } from "@/store/records-store";
 import { fetchTarjetas } from "@/store/cards-store";
 import { fetchCuentas } from "@/store/cuentas-store";
-import { computeDebtEndDate } from "@/lib/debt-helpers";
+import {
+  computeDebtEndDate,
+  getNextInstallment,
+  getDebtSummary,
+} from "@/lib/debt-helpers";
 import { classifyRecurringEvents } from "@/lib/date-helpers";
 import { ok, fail, guard, today, zCategory, zUserId, zRecordType } from "@/lib/mcp/shared";
 
@@ -142,15 +146,51 @@ export function registerRecurringTools(server: McpServer): void {
   server.tool(
     "listar_recurrentes",
     "Lista los eventos recurrentes (recurring_events). Cada evento incluye su " +
-      "campo `type` ('gasto' o 'ingreso').",
+      "campo `type` ('gasto' o 'ingreso') y, además del `defaultAmount` (que en " +
+      "deudas es solo un promedio inicial), el campo `nextInstallment` con la " +
+      "PRÓXIMA CUOTA pendiente real: `{ month, year, dueDate, amount }` (el monto " +
+      "que efectivamente se va a pagar, igual que en la lista/detalle de la UI; " +
+      "null si no hay cuota pendiente). Para deudas (category='deuda') añade " +
+      "`debt` con su resumen: `total` a pagar, `pendingAmount` (saldo), " +
+      "`paidCount`/`installmentsCount`/`remainingCount` y `progressPct`. Usa " +
+      "`nextInstallment.amount` —no `defaultAmount`— para mostrar el valor del " +
+      "próximo pago.",
     {
       soloActivos: z.boolean().optional().describe("Filtrar solo los activos"),
     },
     async ({ soloActivos }) => {
       return guard(async () => {
-        let events = await fetchRecurringEvents();
-        if (soloActivos) events = events.filter((e) => e.isActive);
-        return ok({ count: events.length, events });
+        const [allEvents, configs] = await Promise.all([
+          fetchRecurringEvents(),
+          fetchMonthConfigs(),
+        ]);
+        const events = soloActivos
+          ? allEvents.filter((e) => e.isActive)
+          : allEvents;
+        const enriched = events.map((event) => {
+          const nextInstallment = getNextInstallment(event, configs);
+          if (event.category !== "deuda") {
+            return { ...event, nextInstallment };
+          }
+          const s = getDebtSummary(event, configs);
+          return {
+            ...event,
+            nextInstallment,
+            debt: {
+              total: s.total,
+              principal: s.principal,
+              interestRate: s.interestRate,
+              installmentsCount: s.installmentsCount,
+              paidCount: s.paidCount,
+              remainingCount: s.remainingCount,
+              paidAmount: s.paidAmount,
+              pendingAmount: s.pendingAmount,
+              progressPct: s.progressPct,
+              endDate: s.endDate,
+            },
+          };
+        });
+        return ok({ count: enriched.length, events: enriched });
       });
     }
   );

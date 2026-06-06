@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { formatCurrency } from "@/lib/formatters";
 import { AlertTriangle, Check, ChevronRight } from "lucide-react";
 import { useFinance } from "@/contexts/finance-context";
+import { getNextInstallment } from "@/lib/debt-helpers";
 
 interface RecurringCardProps {
   event: RecurringEvent;
@@ -16,7 +17,12 @@ interface RecurringCardProps {
 }
 
 export function RecurringCard({ event, status }: RecurringCardProps) {
-  const { updateRecurringEvent } = useFinance();
+  const { state, updateRecurringEvent } = useFinance();
+
+  // Valor destacado: la próxima cuota real (no el promedio quemado en
+  // defaultAmount). Si no hay cuota pendiente, caemos al monto por defecto.
+  const nextInstallment = getNextInstallment(event, state.monthConfigs);
+  const displayAmount = nextInstallment?.amount ?? event.defaultAmount;
 
   const toggleActive = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -83,7 +89,7 @@ export function RecurringCard({ event, status }: RecurringCardProps) {
           }`}
         >
           {event.type === "ingreso" ? "+" : ""}
-          {formatCurrency(event.defaultAmount)}
+          {formatCurrency(displayAmount)}
         </p>
         <div
           className="flex size-11 shrink-0 items-center justify-center"

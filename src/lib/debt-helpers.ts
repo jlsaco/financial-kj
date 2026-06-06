@@ -1,6 +1,83 @@
 import { MonthPaymentConfig, RecurringEvent } from "@/types";
 import { getCurrentMonthYear, getEffectiveDayOfMonth } from "@/lib/date-helpers";
 
+export interface NextInstallment {
+  month: number;
+  year: number;
+  /** Fecha efectiva de vencimiento 'YYYY-MM-DD'. */
+  dueDate: string;
+  /** Monto real de esa cuota (config personalizada o el por defecto). */
+  amount: number;
+}
+
+/**
+ * Próxima cuota PENDIENTE (no pagada) de cualquier recurrente, desde el mes en
+ * curso hacia adelante. Es el valor que debe destacarse en la lista/card y no
+ * el `defaultAmount` (que en deudas es solo un promedio inicial).
+ *
+ * - Deudas (category==='deuda'): se apoya en el cronograma de cuotas
+ *   (`getDebtSummary`), respetando montos personalizados por mes.
+ * - Otros recurrentes: primer mes no pagado desde el mes actual (o desde la
+ *   primera cuota si `startDate` es futura), acotado por `endDate` si existe.
+ *
+ * El monto es el de la `MonthPaymentConfig` del mes si está personalizado, o el
+ * `defaultAmount` del recurrente en su defecto. Devuelve null si no hay ninguna
+ * cuota pendiente (p.ej. deuda saldada o recurrente ya vencido sin más meses).
+ */
+export function getNextInstallment(
+  event: RecurringEvent,
+  configs: MonthPaymentConfig[]
+): NextInstallment | null {
+  if (event.category === "deuda") {
+    const ni = getDebtSummary(event, configs).nextInstallment;
+    if (!ni) return null;
+    return {
+      month: ni.month,
+      year: ni.year,
+      dueDate: ni.dueDate,
+      amount: ni.amount,
+    };
+  }
+
+  const eventConfigs = configs.filter((c) => c.recurringEventId === event.id);
+  const configFor = (month: number, year: number) =>
+    eventConfigs.find((c) => c.month === month && c.year === year);
+
+  const { month: curMonth, year: curYear } = getCurrentMonthYear();
+  const curIdx = curYear * 12 + (curMonth - 1);
+
+  // Punto de partida: el mes actual o la primera cuota si `startDate` es futura.
+  let startIdx = curIdx;
+  if (event.startDate) {
+    const [y, m] = event.startDate.split("-").map(Number);
+    if (y && m) startIdx = Math.max(curIdx, y * 12 + (m - 1));
+  }
+
+  // Tope: `endDate` si existe; si no, una ventana amplia (50 años) para no
+  // iterar indefinidamente en recurrentes sin fin.
+  let endIdx = startIdx + 600;
+  if (event.endDate) {
+    const [y, m] = event.endDate.split("-").map(Number);
+    if (y && m) endIdx = y * 12 + (m - 1);
+  }
+
+  for (let idx = startIdx; idx <= endIdx; idx++) {
+    const year = Math.floor(idx / 12);
+    const month = (idx % 12) + 1;
+    const config = configFor(month, year);
+    if (config?.isPaid) continue;
+    const day = getEffectiveDayOfMonth(event.dayOfMonth, month, year);
+    return {
+      month,
+      year,
+      dueDate: toDateString(year, month, day),
+      amount: config?.amount ?? event.defaultAmount,
+    };
+  }
+
+  return null;
+}
+
 /**
  * Helpers puros (sin acceso a BD) para deudas con cuotas.
  *
