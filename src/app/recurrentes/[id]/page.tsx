@@ -11,7 +11,7 @@ import { UserAvatar } from "@/components/shared/user-selector";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/formatters";
 import { USERS } from "@/lib/constants";
-import { getDebtSummary } from "@/lib/debt-helpers";
+import { getDebtSummary, getNextInstallment } from "@/lib/debt-helpers";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -47,6 +47,12 @@ export default function RecurringDetailPage() {
     event.category === "deuda"
       ? getDebtSummary(event, state.monthConfigs)
       : null;
+
+  // Monto destacado: el valor de la próxima cuota a pagar (no el `defaultAmount`,
+  // que en deudas es solo un promedio de todas las cuotas). Si no hay ninguna
+  // cuota pendiente, caemos al monto por defecto.
+  const nextInstallment = getNextInstallment(event, state.monthConfigs);
+  const displayAmount = nextInstallment?.amount ?? event.defaultAmount;
 
   const formatDateLabel = (iso: string): string => {
     const [y, m, d] = iso.split("-").map(Number);
@@ -123,16 +129,21 @@ export default function RecurringDetailPage() {
               </div>
             </div>
             <div className="text-right">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/35">
+                {nextInstallment ? "Próxima cuota" : "Monto"}
+              </p>
               <p
                 className={`text-3xl font-bold tracking-tight tabular-nums font-mono ${
                   event.type === "ingreso" ? "text-emerald-600" : ""
                 }`}
               >
                 {event.type === "ingreso" ? "+" : ""}
-                {formatCurrency(event.defaultAmount)}
+                {formatCurrency(displayAmount)}
               </p>
               <p className="text-xs text-foreground/40">
-                Dia {event.dayOfMonth} de cada mes
+                {nextInstallment
+                  ? `Vence ${formatDateLabel(nextInstallment.dueDate)}`
+                  : `Dia ${event.dayOfMonth} de cada mes`}
               </p>
             </div>
           </div>
