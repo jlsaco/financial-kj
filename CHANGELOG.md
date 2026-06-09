@@ -1,3 +1,10 @@
+## [0.1.34](https://github.com/jlsaco/financial-kj/compare/v0.1.33...v0.1.34) (2026-06-09)
+
+
+### Bug Fixes
+
+* **recurrentes:** mostrar próxima cuota en el detalle, no el promedio ([#65](https://github.com/jlsaco/financial-kj/issues/65)) ([#66](https://github.com/jlsaco/financial-kj/issues/66)) ([dac324a](https://github.com/jlsaco/financial-kj/commit/dac324a21871bf759bd0671f8c35186e2a0ff441))
+
 ## [0.1.33](https://github.com/jlsaco/financial-kj/compare/v0.1.32...v0.1.33) (2026-06-06)
 
 
