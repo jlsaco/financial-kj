@@ -43,7 +43,12 @@ desactualizado.
 - **Tools por dominio:** `src/lib/mcp/tools/`
   - `records.ts` — gastos e ingresos (`finance_records`)
   - `recurring.ts` — gastos recurrentes (`recurring_events` / `month_payment_configs`)
-  - `debts.ts` — deudas (registros con `category='deuda'`)
+  - `debts.ts` — deudas (registros con `category='deuda'`), tabla de
+    amortización (`tabla_amortizacion_deuda`) y abonos a capital
+    (`abonar_capital_deuda`, `listar_abonos_deuda`, `borrar_abono_capital`)
+  - `compras.ts` — compras diferidas (`compras_diferidas`), su tabla de
+    amortización (`tabla_amortizacion_compra_diferida`) y abonos a capital
+    (`abonar_capital_compra_diferida`, `listar_abonos_compra_diferida`)
   - `cuentas.ts` — cuentas bancarias / efectivo (`cuentas`, campo `type` =
     `bank`|`cash`); saldo calculado
   - `transferencias.ts` — transferencias internas entre cuentas
@@ -88,6 +93,20 @@ apoyados en los mismos stores para que no diverjan.
   `estado_presupuestos` ni reportes de gastos/ingresos. El saldo de una cuenta
   sí las refleja (ver `computeCuentaSaldo`). Se crean con `crear_transferencia`
   y se revierten con `borrar_transferencia` (no con `borrar_registro`).
+- **Amortización:** el cálculo capital/interés vive en el módulo PURO
+  `src/lib/amortization.ts` (sistema francés / cuota fija), reutilizado por
+  stores, UI y MCP. La tasa `interestRate` se interpreta como **efectiva
+  mensual** (convención colombiana). En deudas con `principalAmount` y
+  `totalAmount` se calcula además la **tasa implícita** que reproduce la cuota
+  real (`totalAmount ÷ installmentsCount`): si difiere materialmente de la
+  declarada se marca `misaligned` y se usa la implícita para la tabla. Las
+  compras diferidas no guardan capital: se deriva como valor presente de la
+  anualidad a la tasa declarada (o interés 0 sin tasa).
+- **Abonos a capital:** tabla `abonos_capital` (FK excluyente a
+  `recurring_events` o `compras_diferidas`). **Efectos (`abonos_capital.effect`):**
+  `reducir_plazo` (misma cuota, menos cuotas) y `reducir_cuota` (mismas cuotas
+  restantes, cuota menor); enum Zod `zAbonoEffect` en `shared.ts`. Un abono
+  reduce el saldo de capital de inmediato y recalcula el plan.
 
 ## Stack y comandos
 

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      abonos_capital: {
+        Row: {
+          amount: number
+          compra_diferida_id: string | null
+          created_at: string
+          date: string
+          effect: string
+          id: string
+          note: string | null
+          recurring_event_id: string | null
+        }
+        Insert: {
+          amount: number
+          compra_diferida_id?: string | null
+          created_at?: string
+          date: string
+          effect: string
+          id?: string
+          note?: string | null
+          recurring_event_id?: string | null
+        }
+        Update: {
+          amount?: number
+          compra_diferida_id?: string | null
+          created_at?: string
+          date?: string
+          effect?: string
+          id?: string
+          note?: string | null
+          recurring_event_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "abonos_capital_compra_diferida_id_fkey"
+            columns: ["compra_diferida_id"]
+            isOneToOne: false
+            referencedRelation: "compras_diferidas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "abonos_capital_recurring_event_id_fkey"
+            columns: ["recurring_event_id"]
+            isOneToOne: false
+            referencedRelation: "recurring_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       category_budgets: {
         Row: {
           category: Database["public"]["Enums"]["category"]

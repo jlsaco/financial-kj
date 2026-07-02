@@ -1,10 +1,22 @@
 import {
+  AbonoCapital,
   CompraDiferida,
   CompraDiferidaSummary,
   FinanceRecord,
 } from "@/types";
 import { getEffectiveDayOfMonth, getCurrentMonthYear } from "@/lib/date-helpers";
-import { addMonths, toDateString, computeDebtEndDate } from "@/lib/debt-helpers";
+import {
+  addMonths,
+  toDateString,
+  computeDebtEndDate,
+  mapAbonos,
+} from "@/lib/debt-helpers";
+import {
+  computeAmortization,
+  outstandingPrincipalByCount,
+  type AmortizationInput,
+  type AmortizationResult,
+} from "@/lib/amortization";
 
 export interface PlannedInstallment {
   /** Nº de cuota, 1-indexed. */
@@ -47,6 +59,34 @@ export function computeInstallmentSchedule(
 }
 
 /**
+ * Tabla de amortización real de una compra diferida (sistema francés), con los
+ * abonos a capital ya aplicados. Como la compra no guarda el capital por
+ * separado, si hay tasa de interés el capital se deriva como valor presente de
+ * la anualidad; sin tasa se trata como interés 0. Devuelve null si no hay datos
+ * suficientes.
+ */
+export function getCompraDiferidaAmortization(
+  compra: CompraDiferida,
+  abonos: AbonoCapital[] = []
+): AmortizationResult | null {
+  if (compra.installmentsCount < 1) return null;
+  const day = Number(compra.startDate.split("-")[2]) || 1;
+  const input: AmortizationInput = {
+    principal: null,
+    totalAmount: compra.totalAmount,
+    interestRate: compra.interestRate ?? null,
+    installmentsCount: compra.installmentsCount,
+    startDate: compra.startDate,
+    dayOfMonth: day,
+  };
+  const base = computeAmortization(input);
+  if (!base) return null;
+  const mapped = mapAbonos(compra.id, "compra", abonos, base);
+  if (mapped.length === 0) return base;
+  return computeAmortization({ ...input, abonos: mapped }) ?? base;
+}
+
+/**
  * Resumen de una compra diferida a partir de sus cuotas (finance_records hijos).
  * Una cuota se considera "pagada" si su mes ya pasó respecto al mes actual
  * (la liquidación efectiva por tarjeta vive en F1; aquí el progreso se mide por
@@ -54,7 +94,8 @@ export function computeInstallmentSchedule(
  */
 export function getCompraDiferidaSummary(
   compra: CompraDiferida,
-  children: FinanceRecord[]
+  children: FinanceRecord[],
+  abonos: AbonoCapital[] = []
 ): CompraDiferidaSummary {
   const cuotas = children
     .filter((r) => r.compraDiferidaId === compra.id)
@@ -82,8 +123,14 @@ export function getCompraDiferidaSummary(
     }
   }
 
+  const compraAbonos = abonos.filter((a) => a.compraDiferidaId === compra.id);
+  const totalAbonos = compraAbonos.reduce((s, a) => s + a.amount, 0);
+
   const remainingCount = Math.max(0, compra.installmentsCount - paidCount);
-  const pendingAmount = Math.max(0, compra.totalAmount - paidAmount);
+  const pendingAmount = Math.max(
+    0,
+    compra.totalAmount - paidAmount - totalAbonos
+  );
   const endDate =
     computeInstallmentSchedule(
       compra.startDate,
@@ -97,6 +144,13 @@ export function getCompraDiferidaSummary(
     ) ??
     compra.startDate;
 
+  const amort = getCompraDiferidaAmortization(compra, compraAbonos);
+  let outstandingPrincipal: number | null = null;
+  if (amort) {
+    const mapped = mapAbonos(compra.id, "compra", compraAbonos, amort);
+    outstandingPrincipal = outstandingPrincipalByCount(amort, mapped, paidCount);
+  }
+
   return {
     compra,
     installmentAmount,
@@ -106,5 +160,8 @@ export function getCompraDiferidaSummary(
     pendingAmount,
     nextDueDate,
     endDate,
+    outstandingPrincipal,
+    totalAbonos,
+    totalInterest: amort?.totalInterest ?? null,
   };
 }

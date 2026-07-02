@@ -150,6 +150,35 @@ export interface CompraDiferidaSummary {
   /** Próxima cuota no liquidada (fecha) o null si está todo pagado. */
   nextDueDate: string | null;
   endDate: string;
+  /** Saldo de capital pendiente (refleja los abonos), o null si no aplica. */
+  outstandingPrincipal: number | null;
+  /** Suma de los abonos a capital realizados. */
+  totalAbonos: number;
+  /** Interés total estimado del plan (según la amortización). */
+  totalInterest: number | null;
+}
+
+/** Efecto de un abono a capital en el plan de pagos. */
+export type AbonoEffect = "reducir_plazo" | "reducir_cuota";
+
+/**
+ * Abono extraordinario a capital sobre una deuda recurrente (category='deuda')
+ * o una compra diferida. Exactamente uno de los dos ids padre está presente.
+ * `effect` decide el recálculo: `reducir_plazo` (misma cuota, menos cuotas) o
+ * `reducir_cuota` (mismas cuotas restantes, cuota menor).
+ */
+export interface AbonoCapital {
+  id: string;
+  /** Deuda recurrente a la que se abona (excluyente con compraDiferidaId). */
+  recurringEventId?: string;
+  /** Compra diferida a la que se abona (excluyente con recurringEventId). */
+  compraDiferidaId?: string;
+  amount: number;
+  /** Fecha del abono (YYYY-MM-DD). */
+  date: string;
+  effect: AbonoEffect;
+  note?: string;
+  createdAt: string;
 }
 
 /** Tarjeta de crédito usada como medio de pago. */

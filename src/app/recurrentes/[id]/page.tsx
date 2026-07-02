@@ -9,18 +9,38 @@ import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { CategoryBadge } from "@/components/shared/category-badge";
 import { UserAvatar } from "@/components/shared/user-selector";
 import { Button } from "@/components/ui/button";
+import { AmortizationTable } from "@/components/shared/amortization-table";
+import {
+  AbonoFormDrawer,
+  type AbonoPreview,
+} from "@/components/shared/abono-form-drawer";
+import { AbonosHistory } from "@/components/shared/abonos-history";
 import { formatCurrency } from "@/lib/formatters";
 import { USERS } from "@/lib/constants";
-import { getDebtSummary, getNextInstallment } from "@/lib/debt-helpers";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import {
+  getDebtSummary,
+  getNextInstallment,
+  getDebtAmortization,
+} from "@/lib/debt-helpers";
+import { AbonoCapital, AbonoEffect } from "@/types";
+import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+function todayStr(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
 
 export default function RecurringDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { state, deleteRecurringEvent } = useFinance();
+  const { state, deleteRecurringEvent, addAbono, deleteAbono } = useFinance();
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [abonoOpen, setAbonoOpen] = useState(false);
 
   const event = state.recurringEvents.find((e) => e.id === params.id);
 
@@ -43,10 +63,58 @@ export default function RecurringDetailPage() {
     );
   }
 
-  const debtSummary =
-    event.category === "deuda"
-      ? getDebtSummary(event, state.monthConfigs)
-      : null;
+  const isDebt = event.category === "deuda";
+  const eventAbonos = state.abonos.filter(
+    (a) => a.recurringEventId === event.id
+  );
+  const debtSummary = isDebt
+    ? getDebtSummary(event, state.monthConfigs, state.abonos)
+    : null;
+  const amortization = isDebt ? getDebtAmortization(event, eventAbonos) : null;
+
+  const handleAddAbono = async (data: {
+    amount: number;
+    effect: AbonoEffect;
+    date: string;
+    note?: string;
+  }) => {
+    await addAbono({ recurringEventId: event.id, ...data });
+  };
+
+  const handleDeleteAbono = async (id: string) => {
+    try {
+      await deleteAbono(id);
+      toast.success("Abono eliminado");
+    } catch {
+      toast.error("Error al eliminar el abono");
+    }
+  };
+
+  const getAbonoPreview = (
+    amount: number,
+    effect: AbonoEffect
+  ): AbonoPreview | null => {
+    if (!amortization || !debtSummary) return null;
+    const hypo: AbonoCapital = {
+      id: "preview",
+      recurringEventId: event.id,
+      amount,
+      date: todayStr(),
+      effect,
+      createdAt: "",
+    };
+    const next = getDebtAmortization(event, [...eventAbonos, hypo]);
+    if (!next) return null;
+    const paid = debtSummary.paidCount;
+    const remaining = Math.max(0, next.rows.length - paid);
+    const idx = Math.min(paid, next.rows.length - 1);
+    const installment = next.rows[idx]?.payment ?? next.installment;
+    const outstanding = Math.max(
+      0,
+      (debtSummary.outstandingPrincipal ?? 0) - amount
+    );
+    return { installment, remaining, outstanding };
+  };
 
   // Monto destacado: el valor de la próxima cuota a pagar (no el `defaultAmount`,
   // que en deudas es solo un promedio de todas las cuotas). Si no hay ninguna
@@ -204,6 +272,26 @@ export default function RecurringDetailPage() {
 
             {/* Detalle de magnitudes */}
             <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border/40 pt-4">
+              {debtSummary.outstandingPrincipal != null && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                    Saldo de capital
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums font-mono">
+                    {formatCurrency(debtSummary.outstandingPrincipal)}
+                  </p>
+                </div>
+              )}
+              {debtSummary.totalAbonos > 0 && (
+                <div>
+                  <p className="text-[11px] uppercase tracking-wider text-foreground/35">
+                    Abonos a capital
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums font-mono text-emerald-600">
+                    {formatCurrency(debtSummary.totalAbonos)}
+                  </p>
+                </div>
+              )}
               <div>
                 <p className="text-[11px] uppercase tracking-wider text-foreground/35">
                   Total a pagar
@@ -254,6 +342,34 @@ export default function RecurringDetailPage() {
           </div>
         )}
 
+        {/* Tabla de amortización */}
+        {amortization && (
+          <div>
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/35">
+              Amortización
+            </h2>
+            <AmortizationTable result={amortization} />
+          </div>
+        )}
+
+        {/* Abonos a capital */}
+        {isDebt && (
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-foreground/35">
+                Abonos a capital
+              </h2>
+              <button
+                onClick={() => setAbonoOpen(true)}
+                className="inline-flex items-center rounded-xl bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.97]"
+              >
+                <Plus className="mr-1 h-3.5 w-3.5" strokeWidth={2.2} /> Abonar
+              </button>
+            </div>
+            <AbonosHistory abonos={eventAbonos} onDelete={handleDeleteAbono} />
+          </div>
+        )}
+
         {/* Payment timeline */}
         <div>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/35">
@@ -262,6 +378,16 @@ export default function RecurringDetailPage() {
           <PaymentTimeline event={event} />
         </div>
       </div>
+
+      {isDebt && (
+        <AbonoFormDrawer
+          open={abonoOpen}
+          onOpenChange={setAbonoOpen}
+          targetName={event.name}
+          onSubmit={handleAddAbono}
+          getPreview={getAbonoPreview}
+        />
+      )}
 
       <RecurringFormDrawer
         open={editOpen}

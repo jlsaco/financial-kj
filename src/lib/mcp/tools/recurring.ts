@@ -11,6 +11,7 @@ import {
 import { insertRecord } from "@/store/records-store";
 import { fetchTarjetas } from "@/store/cards-store";
 import { fetchCuentas } from "@/store/cuentas-store";
+import { fetchAbonos } from "@/store/abonos-store";
 import {
   computeDebtEndDate,
   getNextInstallment,
@@ -152,17 +153,20 @@ export function registerRecurringTools(server: McpServer): void {
       "que efectivamente se va a pagar, igual que en la lista/detalle de la UI; " +
       "null si no hay cuota pendiente). Para deudas (category='deuda') añade " +
       "`debt` con su resumen: `total` a pagar, `pendingAmount` (saldo), " +
-      "`paidCount`/`installmentsCount`/`remainingCount` y `progressPct`. Usa " +
-      "`nextInstallment.amount` —no `defaultAmount`— para mostrar el valor del " +
-      "próximo pago.",
+      "`outstandingPrincipal` (saldo de CAPITAL, refleja los abonos), " +
+      "`totalAbonos`, `totalInterest`, `paidCount`/`installmentsCount`/" +
+      "`remainingCount`, `progressPct` y las tasas `declaredRate`/`impliedRate` " +
+      "con `misaligned`. Usa `nextInstallment.amount` —no `defaultAmount`— para " +
+      "mostrar el valor del próximo pago.",
     {
       soloActivos: z.boolean().optional().describe("Filtrar solo los activos"),
     },
     async ({ soloActivos }) => {
       return guard(async () => {
-        const [allEvents, configs] = await Promise.all([
+        const [allEvents, configs, abonos] = await Promise.all([
           fetchRecurringEvents(),
           fetchMonthConfigs(),
+          fetchAbonos(),
         ]);
         const events = soloActivos
           ? allEvents.filter((e) => e.isActive)
@@ -172,7 +176,7 @@ export function registerRecurringTools(server: McpServer): void {
           if (event.category !== "deuda") {
             return { ...event, nextInstallment };
           }
-          const s = getDebtSummary(event, configs);
+          const s = getDebtSummary(event, configs, abonos);
           return {
             ...event,
             nextInstallment,
@@ -180,6 +184,13 @@ export function registerRecurringTools(server: McpServer): void {
               total: s.total,
               principal: s.principal,
               interestRate: s.interestRate,
+              outstandingPrincipal: s.outstandingPrincipal,
+              totalAbonos: s.totalAbonos,
+              totalInterest: s.totalInterest,
+              declaredRate: s.declaredRate,
+              impliedRate: s.impliedRate,
+              effectiveRate: s.effectiveRate,
+              misaligned: s.misaligned,
               installmentsCount: s.installmentsCount,
               paidCount: s.paidCount,
               remainingCount: s.remainingCount,

@@ -1,5 +1,14 @@
-import { MonthPaymentConfig, RecurringEvent } from "@/types";
+import { AbonoCapital, MonthPaymentConfig, RecurringEvent } from "@/types";
 import { getCurrentMonthYear, getEffectiveDayOfMonth } from "@/lib/date-helpers";
+import {
+  computeAmortization,
+  abonoAfterInstallment,
+  outstandingPrincipalByCount,
+  type AmortizationInput,
+  type AmortizationResult,
+  type AmortizationAbono,
+  type RateSource,
+} from "@/lib/amortization";
 
 export interface NextInstallment {
   month: number;
@@ -214,6 +223,84 @@ export interface DebtSummary {
   nextInstallment: DebtNextInstallment | null;
   /** Fecha de la última cuota 'YYYY-MM-DD' o null. */
   endDate: string | null;
+  /** Saldo de CAPITAL pendiente (refleja los abonos), o null si no aplica. */
+  outstandingPrincipal: number | null;
+  /** Suma de los abonos a capital realizados sobre la deuda. */
+  totalAbonos: number;
+  /** Interés total estimado del plan (según la amortización), o null. */
+  totalInterest: number | null;
+  /** Tasa % e.m. declarada (informativa), o null. */
+  declaredRate: number | null;
+  /** Tasa % e.m. implícita que reproduce la cuota real, o null. */
+  impliedRate: number | null;
+  /** Tasa % e.m. usada en la amortización, o null. */
+  effectiveRate: number | null;
+  /** De dónde salió la tasa efectiva, o null si no hay amortización. */
+  rateSource: RateSource | null;
+  /** true si la tasa declarada y la implícita difieren materialmente. */
+  misaligned: boolean;
+}
+
+/**
+ * Fecha de inicio del cronograma como 'YYYY-MM-DD' (día efectivo del mes).
+ * Es el `startDate` que se pasa al módulo de amortización.
+ */
+export function getDebtStartDateString(event: RecurringEvent): string {
+  const start = getDebtStartMonthYear(event);
+  const day = getEffectiveDayOfMonth(event.dayOfMonth, start.month, start.year);
+  return toDateString(start.year, start.month, day);
+}
+
+/**
+ * Tabla de amortización real de una deuda recurrente (sistema francés), con los
+ * abonos a capital ya aplicados. Devuelve null si la deuda no tiene datos
+ * suficientes (sin cuotas o sin total/capital). Reutiliza el módulo puro
+ * `src/lib/amortization.ts`.
+ */
+export function getDebtAmortization(
+  event: RecurringEvent,
+  abonos: AbonoCapital[] = []
+): AmortizationResult | null {
+  const installments = event.installmentsCount ?? 0;
+  if (installments < 1) return null;
+  const input: AmortizationInput = {
+    principal: event.principalAmount ?? null,
+    totalAmount: event.totalAmount ?? null,
+    interestRate: event.interestRate ?? null,
+    installmentsCount: installments,
+    startDate: getDebtStartDateString(event),
+    dayOfMonth: event.dayOfMonth,
+  };
+  const base = computeAmortization(input);
+  if (!base) return null;
+  const mapped = mapAbonos(event.id, "recurring", abonos, base);
+  if (mapped.length === 0) return base;
+  return computeAmortization({ ...input, abonos: mapped }) ?? base;
+}
+
+/**
+ * Mapea los abonos de una deuda/compra a `AmortizationAbono` (con su
+ * `afterInstallment` derivado de la fecha), sobre el cronograma base.
+ */
+export function mapAbonos(
+  parentId: string,
+  kind: "recurring" | "compra",
+  abonos: AbonoCapital[],
+  base: AmortizationResult
+): AmortizationAbono[] {
+  return abonos
+    .filter((a) =>
+      kind === "recurring"
+        ? a.recurringEventId === parentId
+        : a.compraDiferidaId === parentId
+    )
+    .slice()
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
+    .map((a) => ({
+      amount: a.amount,
+      effect: a.effect,
+      afterInstallment: abonoAfterInstallment(base.rows, a.date),
+    }));
 }
 
 /**
@@ -222,7 +309,8 @@ export interface DebtSummary {
  */
 export function getDebtSummary(
   event: RecurringEvent,
-  configs: MonthPaymentConfig[]
+  configs: MonthPaymentConfig[],
+  abonos: AbonoCapital[] = []
 ): DebtSummary {
   const schedule = getDebtSchedule(event);
   const total = event.totalAmount ?? 0;
@@ -242,10 +330,25 @@ export function getDebtSummary(
     }
   }
 
-  const pendingAmount = Math.max(0, total - paidAmount);
+  // Amortización real (con abonos) para el saldo de capital y el desglose.
+  const eventAbonos = abonos.filter((a) => a.recurringEventId === event.id);
+  const amort = getDebtAmortization(event, eventAbonos);
+  const totalAbonos = eventAbonos.reduce((s, a) => s + a.amount, 0);
+
+  let outstandingPrincipal: number | null = null;
+  if (amort) {
+    const mapped = mapAbonos(event.id, "recurring", eventAbonos, amort);
+    outstandingPrincipal = outstandingPrincipalByCount(amort, mapped, paidCount);
+  }
+
+  // El saldo pendiente (base total) descuenta también los abonos: un abono se
+  // refleja de inmediato bajando el pendiente.
+  const pendingAmount = Math.max(0, total - paidAmount - totalAbonos);
   const remainingCount = Math.max(0, installmentsCount - paidCount);
   const progressPct =
-    total > 0 ? Math.min(100, Math.max(0, (paidAmount / total) * 100)) : 0;
+    total > 0
+      ? Math.min(100, Math.max(0, ((paidAmount + totalAbonos) / total) * 100))
+      : 0;
 
   // Próxima cuota NO pagada desde el mes actual hacia adelante.
   const { month: curMonth, year: curYear } = getCurrentMonthYear();
@@ -281,5 +384,13 @@ export function getDebtSummary(
     progressPct,
     nextInstallment,
     endDate,
+    outstandingPrincipal,
+    totalAbonos,
+    totalInterest: amort?.totalInterest ?? null,
+    declaredRate: amort?.declaredRate ?? null,
+    impliedRate: amort?.impliedRate ?? null,
+    effectiveRate: amort?.effectiveRate ?? null,
+    rateSource: amort?.rateSource ?? null,
+    misaligned: amort?.misaligned ?? false,
   };
 }
