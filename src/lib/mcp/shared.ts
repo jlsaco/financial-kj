@@ -16,6 +16,9 @@ export const zUserId = z.enum(["jose", "karen", "bot-correos"]);
 
 export const zRecordType = z.enum(["gasto", "ingreso"]);
 
+/** Tipo lógico de cuenta: bank (bancaria) o cash (efectivo). */
+export const zCuentaType = z.enum(["bank", "cash"]);
+
 /** Today as YYYY-MM-DD in local time (used as default for `date` params). */
 export function today(): string {
   const now = new Date();

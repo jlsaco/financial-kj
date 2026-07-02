@@ -87,6 +87,7 @@ export type Database = {
           is_active: boolean
           name: string
           owner: Database["public"]["Enums"]["user_id"]
+          type: Database["public"]["Enums"]["cuenta_type"]
         }
         Insert: {
           created_at?: string
@@ -95,6 +96,7 @@ export type Database = {
           is_active?: boolean
           name: string
           owner: Database["public"]["Enums"]["user_id"]
+          type?: Database["public"]["Enums"]["cuenta_type"]
         }
         Update: {
           created_at?: string
@@ -103,6 +105,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           owner?: Database["public"]["Enums"]["user_id"]
+          type?: Database["public"]["Enums"]["cuenta_type"]
         }
         Relationships: []
       }
@@ -397,6 +400,51 @@ export type Database = {
           },
         ]
       }
+      transferencias: {
+        Row: {
+          amount: number
+          created_at: string
+          cuenta_destino_id: string
+          cuenta_origen_id: string
+          date: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          cuenta_destino_id: string
+          cuenta_origen_id: string
+          date: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          cuenta_destino_id?: string
+          cuenta_origen_id?: string
+          date?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencias_cuenta_destino_id_fkey"
+            columns: ["cuenta_destino_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_cuenta_origen_id_fkey"
+            columns: ["cuenta_origen_id"]
+            isOneToOne: false
+            referencedRelation: "cuentas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -413,6 +461,7 @@ export type Database = {
         | "servicios"
         | "entretenimiento"
         | "gastos-financieros"
+      cuenta_type: "bank" | "cash"
       record_type: "gasto" | "ingreso"
       user_id: "jose" | "karen" | "bot-correos"
     }
@@ -551,6 +600,7 @@ export const Constants = {
         "entretenimiento",
         "gastos-financieros",
       ],
+      cuenta_type: ["bank", "cash"],
       record_type: ["gasto", "ingreso"],
       user_id: ["jose", "karen", "bot-correos"],
     },

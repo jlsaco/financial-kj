@@ -44,6 +44,10 @@ desactualizado.
   - `records.ts` — gastos e ingresos (`finance_records`)
   - `recurring.ts` — gastos recurrentes (`recurring_events` / `month_payment_configs`)
   - `debts.ts` — deudas (registros con `category='deuda'`)
+  - `cuentas.ts` — cuentas bancarias / efectivo (`cuentas`, campo `type` =
+    `bank`|`cash`); saldo calculado
+  - `transferencias.ts` — transferencias internas entre cuentas
+    (`transferencias`): movimientos neutros que no cuentan como gasto/ingreso
   - `summary.ts` — resúmenes y estado de presupuestos
   - `issues.ts` — issues de GitHub (bugs/mejoras) del repo público vía
     `src/lib/github.ts`
@@ -76,7 +80,14 @@ apoyados en los mismos stores para que no diverjan.
   `gastos-financieros`.
 - **Usuarios:** `jose`, `karen`, `bot-correos`.
 - **Tipos de registro:** `gasto`, `ingreso`.
+- **Tipos de cuenta (`cuentas.type`):** `bank` (bancaria), `cash` (efectivo).
 - Las deudas son `finance_records` con `category='deuda'`.
+- **Transferencias:** movimientos internos entre dos cuentas (tabla
+  `transferencias`). NO son gasto ni ingreso: solo mueven saldo (restan del
+  origen, suman al destino) y NUNCA deben contarse en `resumen_mes`,
+  `estado_presupuestos` ni reportes de gastos/ingresos. El saldo de una cuenta
+  sí las refleja (ver `computeCuentaSaldo`). Se crean con `crear_transferencia`
+  y se revierten con `borrar_transferencia` (no con `borrar_registro`).
 
 ## Stack y comandos
 

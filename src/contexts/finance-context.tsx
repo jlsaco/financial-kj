@@ -22,6 +22,7 @@ import {
   CompraDiferida,
   Cuenta,
   CuentaSaldo,
+  Transferencia,
 } from "@/types";
 import * as recordsStore from "@/store/records-store";
 import * as recurringStore from "@/store/recurring-store";
@@ -29,6 +30,7 @@ import * as budgetsStore from "@/store/budgets-store";
 import * as cardsStore from "@/store/cards-store";
 import * as comprasStore from "@/store/compras-store";
 import * as cuentasStore from "@/store/cuentas-store";
+import * as transferenciasStore from "@/store/transferencias-store";
 import {
   classifyRecurringEvents,
   getUpcomingRecurringEvents,
@@ -47,6 +49,7 @@ interface FinanceState {
   liquidaciones: Liquidacion[];
   comprasDiferidas: CompraDiferida[];
   cuentas: Cuenta[];
+  transferencias: Transferencia[];
   isLoaded: boolean;
 }
 
@@ -70,7 +73,9 @@ type FinanceAction =
   | { type: "DELETE_COMPRA"; payload: string }
   | { type: "ADD_CUENTA"; payload: Cuenta }
   | { type: "UPDATE_CUENTA"; payload: Cuenta }
-  | { type: "DELETE_CUENTA"; payload: string };
+  | { type: "DELETE_CUENTA"; payload: string }
+  | { type: "ADD_TRANSFERENCIA"; payload: Transferencia }
+  | { type: "DELETE_TRANSFERENCIA"; payload: string };
 
 const initialState: FinanceState = {
   records: [],
@@ -81,6 +86,7 @@ const initialState: FinanceState = {
   liquidaciones: [],
   comprasDiferidas: [],
   cuentas: [],
+  transferencias: [],
   isLoaded: false,
 };
 
@@ -246,7 +252,8 @@ function financeReducer(
 
     case "DELETE_CUENTA":
       // En BD las referencias (records.cuenta_id, liquidaciones.cuenta_id,
-      // tarjetas.cuenta_pago_id) pasan a NULL. Reflejamos lo mismo en memoria.
+      // tarjetas.cuenta_pago_id) pasan a NULL, y las transferencias en las que
+      // participaba la cuenta se borran en CASCADE. Reflejamos lo mismo en memoria.
       return {
         ...state,
         cuentas: state.cuentas.filter((c) => c.id !== action.payload),
@@ -260,6 +267,25 @@ function financeReducer(
           t.cuentaPagoId === action.payload
             ? { ...t, cuentaPagoId: undefined }
             : t
+        ),
+        transferencias: state.transferencias.filter(
+          (t) =>
+            t.cuentaOrigenId !== action.payload &&
+            t.cuentaDestinoId !== action.payload
+        ),
+      };
+
+    case "ADD_TRANSFERENCIA":
+      return {
+        ...state,
+        transferencias: [action.payload, ...state.transferencias],
+      };
+
+    case "DELETE_TRANSFERENCIA":
+      return {
+        ...state,
+        transferencias: state.transferencias.filter(
+          (t) => t.id !== action.payload
         ),
       };
 
@@ -311,12 +337,21 @@ interface FinanceContextValue {
   /** Borra una compra diferida y sus cuotas. */
   deleteCompraDiferida: (id: string) => Promise<void>;
   addCuenta: (
-    data: Omit<Cuenta, "id" | "createdAt" | "isActive"> & { isActive?: boolean }
+    data: Omit<Cuenta, "id" | "createdAt" | "isActive" | "type"> & {
+      isActive?: boolean;
+      type?: Cuenta["type"];
+    }
   ) => Promise<Cuenta>;
   updateCuenta: (id: string, updates: Partial<Cuenta>) => Promise<void>;
   deleteCuenta: (id: string) => Promise<void>;
-  /** Saldo calculado de todas las cuentas. */
+  /** Saldo calculado de todas las cuentas (incluye transferencias). */
   getCuentasSaldos: () => CuentaSaldo[];
+  /** Crea una transferencia interna entre dos cuentas (movimiento neutro). */
+  addTransferencia: (
+    data: Omit<Transferencia, "id" | "createdAt">
+  ) => Promise<Transferencia>;
+  /** Borra (revierte) una transferencia. */
+  deleteTransferencia: (id: string) => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -335,6 +370,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         liquidaciones,
         comprasDiferidas,
         cuentas,
+        transferencias,
       ] = await Promise.all([
         recordsStore.fetchRecords(),
         recurringStore.fetchRecurringEvents(),
@@ -344,6 +380,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         cardsStore.fetchLiquidaciones(),
         comprasStore.fetchComprasDiferidas(),
         cuentasStore.fetchCuentas(),
+        transferenciasStore.fetchTransferencias(),
       ]);
       dispatch({
         type: "INIT",
@@ -356,6 +393,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           liquidaciones,
           comprasDiferidas,
           cuentas,
+          transferencias,
         },
       });
     }
@@ -541,8 +579,9 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const addCuenta = useCallback(
     async (
-      data: Omit<Cuenta, "id" | "createdAt" | "isActive"> & {
+      data: Omit<Cuenta, "id" | "createdAt" | "isActive" | "type"> & {
         isActive?: boolean;
+        type?: Cuenta["type"];
       }
     ) => {
       const saved = await cuentasStore.insertCuenta(data);
@@ -567,9 +606,28 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
 
   const getCuentasSaldos = useCallback(
     () =>
-      computeCuentasSaldos(state.cuentas, state.records, state.liquidaciones),
-    [state.cuentas, state.records, state.liquidaciones]
+      computeCuentasSaldos(
+        state.cuentas,
+        state.records,
+        state.liquidaciones,
+        state.transferencias
+      ),
+    [state.cuentas, state.records, state.liquidaciones, state.transferencias]
   );
+
+  const addTransferencia = useCallback(
+    async (data: Omit<Transferencia, "id" | "createdAt">) => {
+      const saved = await transferenciasStore.insertTransferencia(data);
+      dispatch({ type: "ADD_TRANSFERENCIA", payload: saved });
+      return saved;
+    },
+    []
+  );
+
+  const deleteTransferencia = useCallback(async (id: string) => {
+    await transferenciasStore.deleteTransferencia(id);
+    dispatch({ type: "DELETE_TRANSFERENCIA", payload: id });
+  }, []);
 
   return (
     <FinanceContext.Provider
@@ -598,6 +656,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         updateCuenta,
         deleteCuenta,
         getCuentasSaldos,
+        addTransferencia,
+        deleteTransferencia,
       }}
     >
       {children}
