@@ -1,3 +1,10 @@
+## [0.1.38](https://github.com/jlsaco/financial-kj/compare/v0.1.37...v0.1.38) (2026-07-02)
+
+
+### Features
+
+* **deudas:** amortización real capital/interés y abonos a capital ([#69](https://github.com/jlsaco/financial-kj/issues/69)) ([#74](https://github.com/jlsaco/financial-kj/issues/74)) ([0d9a44f](https://github.com/jlsaco/financial-kj/commit/0d9a44f76cd98ac44e120d27da3353617daa9868))
+
 ## [0.1.37](https://github.com/jlsaco/financial-kj/compare/v0.1.36...v0.1.37) (2026-07-02)
 
 
