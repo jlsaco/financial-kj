@@ -61,6 +61,21 @@ const mcpHandler = createMcpHandler(
       "cuota = totalAmount ÷ installmentsCount. Usa listar_compras_diferidas y " +
       "resumen_compra_diferida para ver cuotas pagadas/restantes, saldo pendiente y " +
       "próxima cuota, y borrar_compra_diferida para eliminarla con sus cuotas en cascada. " +
+      "Amortización real (capital vs. interés): tabla_amortizacion_deuda y " +
+      "tabla_amortizacion_compra_diferida devuelven la tabla tipo francesa (cuota fija) " +
+      "con el desglose por cuota (interés, capital y saldo de capital restante). La tasa " +
+      "interestRate se interpreta como EFECTIVA MENSUAL (convención colombiana). En deudas " +
+      "con capital y total se calcula además la tasa IMPLÍCITA que reproduce la cuota real " +
+      "(total÷cuotas); si difiere materialmente de la declarada se marca misaligned=true y " +
+      "se usa la implícita para la tabla. resumen_deuda/resumen_compra_diferida y " +
+      "listar_recurrentes exponen el saldo de CAPITAL pendiente (outstandingPrincipal), el " +
+      "interés total y los abonos. " +
+      "Abonos a capital: abonar_capital_deuda y abonar_capital_compra_diferida registran un " +
+      "abono extraordinario (amount, effect, date?, note?) que reduce el capital de " +
+      "inmediato y recalcula el plan; effect='reducir_plazo' mantiene la cuota y baja el " +
+      "nº de cuotas, effect='reducir_cuota' mantiene las cuotas y baja el valor de cada " +
+      "una. listar_abonos_deuda y listar_abonos_compra_diferida dan el historial, y " +
+      "borrar_abono_capital elimina un abono (recalculando sin él). " +
       "Cuentas (caja real): cuentas bancarias/efectivo con saldo. crear_cuenta, " +
       "listar_cuentas (con saldo calculado), saldo_cuenta, actualizar_cuenta y " +
       "borrar_cuenta. Cada cuenta tiene un type: 'bank' (bancaria, por defecto) o " +

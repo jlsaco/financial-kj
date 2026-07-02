@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Layers, Trash2, CreditCard } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { CompraDiferidaSummary } from "@/types";
@@ -19,11 +20,21 @@ export function CompraDiferidaCard({
   onDelete,
 }: CompraDiferidaCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const router = useRouter();
   const { compra, installmentAmount, paidCount, remainingCount, pendingAmount, nextDueDate } =
     summary;
 
   return (
-    <div className="rounded-2xl border border-border/50 bg-card p-4 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+    <>
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => router.push(`/compras/${compra.id}`)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") router.push(`/compras/${compra.id}`);
+      }}
+      className="w-full cursor-pointer rounded-2xl border border-border/50 bg-card p-4 text-left shadow-[0_1px_3px_rgba(0,0,0,0.04)] transition-all hover:border-border active:scale-[0.99]"
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
@@ -48,7 +59,10 @@ export function CompraDiferidaCard({
         </div>
         <button
           type="button"
-          onClick={() => setDeleteOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setDeleteOpen(true);
+          }}
           aria-label="Eliminar compra diferida"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted-foreground/50 transition-all hover:bg-destructive/10 hover:text-destructive active:scale-95"
         >
@@ -82,6 +96,7 @@ export function CompraDiferidaCard({
           Próxima cuota: {formatDate(nextDueDate)}
         </p>
       )}
+      </div>
 
       <ConfirmDialog
         open={deleteOpen}
@@ -90,6 +105,6 @@ export function CompraDiferidaCard({
         description={`¿Eliminar "${compra.name}"? Se borrarán también sus ${compra.installmentsCount} cuotas. Esta acción no se puede deshacer.`}
         onConfirm={() => onDelete(compra.id)}
       />
-    </div>
+    </>
   );
 }

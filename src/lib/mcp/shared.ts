@@ -19,6 +19,9 @@ export const zRecordType = z.enum(["gasto", "ingreso"]);
 /** Tipo lógico de cuenta: bank (bancaria) o cash (efectivo). */
 export const zCuentaType = z.enum(["bank", "cash"]);
 
+/** Efecto de un abono a capital: reducir el plazo o reducir la cuota. */
+export const zAbonoEffect = z.enum(["reducir_plazo", "reducir_cuota"]);
+
 /** Today as YYYY-MM-DD in local time (used as default for `date` params). */
 export function today(): string {
   const now = new Date();

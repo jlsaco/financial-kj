@@ -23,6 +23,7 @@ import {
   Cuenta,
   CuentaSaldo,
   Transferencia,
+  AbonoCapital,
 } from "@/types";
 import * as recordsStore from "@/store/records-store";
 import * as recurringStore from "@/store/recurring-store";
@@ -31,6 +32,7 @@ import * as cardsStore from "@/store/cards-store";
 import * as comprasStore from "@/store/compras-store";
 import * as cuentasStore from "@/store/cuentas-store";
 import * as transferenciasStore from "@/store/transferencias-store";
+import * as abonosStore from "@/store/abonos-store";
 import {
   classifyRecurringEvents,
   getUpcomingRecurringEvents,
@@ -50,6 +52,7 @@ interface FinanceState {
   comprasDiferidas: CompraDiferida[];
   cuentas: Cuenta[];
   transferencias: Transferencia[];
+  abonos: AbonoCapital[];
   isLoaded: boolean;
 }
 
@@ -75,7 +78,9 @@ type FinanceAction =
   | { type: "UPDATE_CUENTA"; payload: Cuenta }
   | { type: "DELETE_CUENTA"; payload: string }
   | { type: "ADD_TRANSFERENCIA"; payload: Transferencia }
-  | { type: "DELETE_TRANSFERENCIA"; payload: string };
+  | { type: "DELETE_TRANSFERENCIA"; payload: string }
+  | { type: "ADD_ABONO"; payload: AbonoCapital }
+  | { type: "DELETE_ABONO"; payload: string };
 
 const initialState: FinanceState = {
   records: [],
@@ -87,6 +92,7 @@ const initialState: FinanceState = {
   comprasDiferidas: [],
   cuentas: [],
   transferencias: [],
+  abonos: [],
   isLoaded: false,
 };
 
@@ -137,6 +143,10 @@ function financeReducer(
         ),
         monthConfigs: state.monthConfigs.filter(
           (c) => c.recurringEventId !== action.payload
+        ),
+        // En BD los abonos se borran en cascada; lo reflejamos en memoria.
+        abonos: state.abonos.filter(
+          (a) => a.recurringEventId !== action.payload
         ),
       };
 
@@ -228,7 +238,8 @@ function financeReducer(
       };
 
     case "DELETE_COMPRA":
-      // En BD las cuotas (finance_records hijos) se borran en cascada.
+      // En BD las cuotas (finance_records hijos) y los abonos se borran en
+      // cascada. Reflejamos lo mismo en memoria.
       return {
         ...state,
         comprasDiferidas: state.comprasDiferidas.filter(
@@ -236,6 +247,9 @@ function financeReducer(
         ),
         records: state.records.filter(
           (r) => r.compraDiferidaId !== action.payload
+        ),
+        abonos: state.abonos.filter(
+          (a) => a.compraDiferidaId !== action.payload
         ),
       };
 
@@ -287,6 +301,15 @@ function financeReducer(
         transferencias: state.transferencias.filter(
           (t) => t.id !== action.payload
         ),
+      };
+
+    case "ADD_ABONO":
+      return { ...state, abonos: [...state.abonos, action.payload] };
+
+    case "DELETE_ABONO":
+      return {
+        ...state,
+        abonos: state.abonos.filter((a) => a.id !== action.payload),
       };
 
     default:
@@ -352,6 +375,12 @@ interface FinanceContextValue {
   ) => Promise<Transferencia>;
   /** Borra (revierte) una transferencia. */
   deleteTransferencia: (id: string) => Promise<void>;
+  /** Registra un abono a capital sobre una deuda o compra diferida. */
+  addAbono: (
+    data: Omit<AbonoCapital, "id" | "createdAt">
+  ) => Promise<AbonoCapital>;
+  /** Borra un abono a capital (recalcula el plan sin él). */
+  deleteAbono: (id: string) => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextValue | null>(null);
@@ -371,6 +400,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         comprasDiferidas,
         cuentas,
         transferencias,
+        abonos,
       ] = await Promise.all([
         recordsStore.fetchRecords(),
         recurringStore.fetchRecurringEvents(),
@@ -381,6 +411,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         comprasStore.fetchComprasDiferidas(),
         cuentasStore.fetchCuentas(),
         transferenciasStore.fetchTransferencias(),
+        abonosStore.fetchAbonos(),
       ]);
       dispatch({
         type: "INIT",
@@ -394,6 +425,7 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
           comprasDiferidas,
           cuentas,
           transferencias,
+          abonos,
         },
       });
     }
@@ -629,6 +661,20 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "DELETE_TRANSFERENCIA", payload: id });
   }, []);
 
+  const addAbono = useCallback(
+    async (data: Omit<AbonoCapital, "id" | "createdAt">) => {
+      const saved = await abonosStore.insertAbono(data);
+      dispatch({ type: "ADD_ABONO", payload: saved });
+      return saved;
+    },
+    []
+  );
+
+  const deleteAbono = useCallback(async (id: string) => {
+    await abonosStore.deleteAbono(id);
+    dispatch({ type: "DELETE_ABONO", payload: id });
+  }, []);
+
   return (
     <FinanceContext.Provider
       value={{
@@ -658,6 +704,8 @@ export function FinanceProvider({ children }: { children: ReactNode }) {
         getCuentasSaldos,
         addTransferencia,
         deleteTransferencia,
+        addAbono,
+        deleteAbono,
       }}
     >
       {children}
