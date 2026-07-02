@@ -45,6 +45,12 @@ export const CATEGORIES: Record<
     color: "bg-violet-600",
     bgLight: "bg-violet-50/80 text-violet-800 border border-violet-200/60",
   },
+  entretenimiento: {
+    label: "Entretenimiento",
+    icon: "Popcorn",
+    color: "bg-fuchsia-600",
+    bgLight: "bg-fuchsia-50/80 text-fuchsia-800 border border-fuchsia-200/60",
+  },
 };
 
 export const RECORD_TYPE_CONFIG = {
@@ -62,6 +68,7 @@ export const ALL_CATEGORIES: Category[] = [
   "hogar-entretenimiento",
   "deuda",
   "servicios",
+  "entretenimiento",
 ];
 
 export const ALL_USER_IDS: UserId[] = ["jose", "karen", "bot-correos"];

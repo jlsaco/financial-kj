@@ -10,10 +10,11 @@ import {
   Home,
   CreditCard,
   Wifi,
+  Popcorn,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi };
+const ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn };
 
 interface BudgetCardProps {
   budget: CategoryBudget;

@@ -17,6 +17,7 @@ import {
   Home,
   CreditCard,
   Wifi,
+  Popcorn,
 } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { useFinance } from "@/contexts/finance-context";
@@ -26,7 +27,7 @@ import { computeDebtEndDate } from "@/lib/debt-helpers";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 
-const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi };
+const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn };
 
 interface RecurringFormDrawerProps {
   open: boolean;

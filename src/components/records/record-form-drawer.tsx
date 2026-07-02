@@ -17,6 +17,7 @@ import {
   Home,
   CreditCard,
   Wifi,
+  Popcorn,
   Trash2,
   Wallet,
 } from "lucide-react";
@@ -28,7 +29,7 @@ import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
 import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 
-const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi };
+const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn };
 
 interface RecordFormDrawerProps {
   open: boolean;

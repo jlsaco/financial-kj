@@ -411,6 +411,7 @@ export type Database = {
         | "hogar-entretenimiento"
         | "deuda"
         | "servicios"
+        | "entretenimiento"
       record_type: "gasto" | "ingreso"
       user_id: "jose" | "karen" | "bot-correos"
     }
@@ -546,6 +547,7 @@ export const Constants = {
         "hogar-entretenimiento",
         "deuda",
         "servicios",
+        "entretenimiento",
       ],
       record_type: ["gasto", "ingreso"],
       user_id: ["jose", "karen", "bot-correos"],
