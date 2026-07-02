@@ -8,6 +8,7 @@ export const zCategory = z.enum([
   "hogar-entretenimiento",
   "deuda",
   "servicios",
+  "entretenimiento",
 ]);
 
 export const zUserId = z.enum(["jose", "karen", "bot-correos"]);

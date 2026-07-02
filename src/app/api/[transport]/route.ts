@@ -23,7 +23,7 @@ const mcpHandler = createMcpHandler(
       "MCP de FinanceKJ. Gestiona finanzas personales: gastos e ingresos " +
       "(finance_records), gastos recurrentes (recurring_events / month_payment_configs), " +
       "deudas (registros con category='deuda') y presupuestos. Categorías válidas: " +
-      "movilidad, alimentacion-salud, hogar-entretenimiento, deuda, servicios. " +
+      "movilidad, alimentacion-salud, hogar-entretenimiento, deuda, servicios, entretenimiento. " +
       "Usuarios: jose, karen, bot-correos. Los recurrentes (recurring_events) pueden " +
       "ser de tipo 'gasto' o 'ingreso' (campo type): crear_gasto_recurrente para " +
       "gastos y crear_ingreso_recurrente para ingresos (p.ej. salario); un ingreso " +
