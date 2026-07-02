@@ -1,3 +1,10 @@
+## [0.1.37](https://github.com/jlsaco/financial-kj/compare/v0.1.36...v0.1.37) (2026-07-02)
+
+
+### Features
+
+* **cuentas:** efectivo como medio de pago y transferencias entre cuentas ([#67](https://github.com/jlsaco/financial-kj/issues/67)) ([#73](https://github.com/jlsaco/financial-kj/issues/73)) ([335522e](https://github.com/jlsaco/financial-kj/commit/335522e74d078ae09174ba859a37b0fa22c48831))
+
 ## [0.1.36](https://github.com/jlsaco/financial-kj/compare/v0.1.35...v0.1.36) (2026-07-02)
 
 
