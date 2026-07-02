@@ -1,3 +1,10 @@
+## [0.1.36](https://github.com/jlsaco/financial-kj/compare/v0.1.35...v0.1.36) (2026-07-02)
+
+
+### Features
+
+* **categorias:** agregar categoría "Gastos financieros" ([#70](https://github.com/jlsaco/financial-kj/issues/70)) ([#72](https://github.com/jlsaco/financial-kj/issues/72)) ([89047c4](https://github.com/jlsaco/financial-kj/commit/89047c4a90a703df2132730868d407e18f439692))
+
 ## [0.1.35](https://github.com/jlsaco/financial-kj/compare/v0.1.34...v0.1.35) (2026-07-02)
 
 
