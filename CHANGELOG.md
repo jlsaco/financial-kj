@@ -1,3 +1,10 @@
+## [0.1.35](https://github.com/jlsaco/financial-kj/compare/v0.1.34...v0.1.35) (2026-07-02)
+
+
+### Features
+
+* **categorias:** agregar categoría "entretenimiento" ([#68](https://github.com/jlsaco/financial-kj/issues/68)) ([#71](https://github.com/jlsaco/financial-kj/issues/71)) ([4d17190](https://github.com/jlsaco/financial-kj/commit/4d17190c526753e8ba4c663aee803f1ae8052c23))
+
 ## [0.1.34](https://github.com/jlsaco/financial-kj/compare/v0.1.33...v0.1.34) (2026-06-09)
 
 
