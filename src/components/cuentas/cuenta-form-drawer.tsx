@@ -11,11 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, Archive, RotateCcw } from "lucide-react";
+import { Trash2, Archive, RotateCcw, Landmark, Banknote } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useFinance } from "@/contexts/finance-context";
-import { UserId, Cuenta } from "@/types";
+import { UserId, Cuenta, CuentaType } from "@/types";
 import { toast } from "sonner";
 
 interface CuentaFormDrawerProps {
@@ -35,16 +35,19 @@ export function CuentaFormDrawer({
 
   const [name, setName] = useState("");
   const [owner, setOwner] = useState<UserId>("jose");
+  const [type, setType] = useState<CuentaType>("bank");
   const [initialBalance, setInitialBalance] = useState("");
 
   useEffect(() => {
     if (editCuenta) {
       setName(editCuenta.name);
       setOwner(editCuenta.owner);
+      setType(editCuenta.type);
       setInitialBalance(editCuenta.initialBalance.toString());
     } else {
       setName("");
       setOwner("jose");
+      setType("bank");
       setInitialBalance("");
     }
   }, [editCuenta, open]);
@@ -64,7 +67,7 @@ export function CuentaFormDrawer({
 
     setSaving(true);
     try {
-      const payload = { name: name.trim(), owner, initialBalance: parsedBalance };
+      const payload = { name: name.trim(), owner, type, initialBalance: parsedBalance };
       if (editCuenta) {
         await updateCuenta(editCuenta.id, payload);
         toast.success("Cuenta actualizada");
@@ -123,6 +126,38 @@ export function CuentaFormDrawer({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+                Tipo
+              </Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setType("bank")}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                    type === "bank"
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "border border-border/60 text-muted-foreground hover:border-border"
+                  }`}
+                >
+                  <Landmark className="h-4 w-4" strokeWidth={1.7} />
+                  Bancaria
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setType("cash")}
+                  className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all active:scale-[0.98] ${
+                    type === "cash"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "border border-border/60 text-muted-foreground hover:border-border"
+                  }`}
+                >
+                  <Banknote className="h-4 w-4" strokeWidth={1.7} />
+                  Efectivo
+                </button>
+              </div>
             </div>
 
             <div className="space-y-1.5">

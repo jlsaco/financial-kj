@@ -63,13 +63,27 @@ const mcpHandler = createMcpHandler(
       "próxima cuota, y borrar_compra_diferida para eliminarla con sus cuotas en cascada. " +
       "Cuentas (caja real): cuentas bancarias/efectivo con saldo. crear_cuenta, " +
       "listar_cuentas (con saldo calculado), saldo_cuenta, actualizar_cuenta y " +
-      "borrar_cuenta. El saldo = saldo inicial + ingresos − gastos de débito/efectivo − " +
-      "liquidaciones de tarjeta pagadas desde la cuenta. Un ingreso entra a una cuenta " +
+      "borrar_cuenta. Cada cuenta tiene un type: 'bank' (bancaria, por defecto) o " +
+      "'cash' (efectivo, la bolsa de dinero físico). El efectivo es una cuenta más: " +
+      "el saldo = saldo inicial + ingresos − gastos de débito/efectivo − " +
+      "liquidaciones de tarjeta pagadas desde la cuenta + transferencias recibidas − " +
+      "transferencias enviadas. Un ingreso entra a una cuenta " +
       "con cuentaId (crear_ingreso); un gasto de débito/efectivo sale de la cuenta con " +
-      "cuentaId (crear_gasto sin tarjeta). Los gastos con tarjeta NO mueven la cuenta " +
+      "cuentaId (crear_gasto sin tarjeta); para un gasto pagado en efectivo usa el " +
+      "cuentaId de la cuenta type='cash'. Los gastos con tarjeta NO mueven la cuenta " +
       "hasta que la tarjeta se liquida: liquidar_tarjeta_mes resta de la cuenta indicada " +
       "(cuentaId) o, por defecto, de la cuenta de pago de la tarjeta (cuentaPagoId, " +
       "configurable en crear_tarjeta/actualizar_tarjeta). " +
+      "Transferencias entre cuentas: crear_transferencia mueve dinero de una cuenta a " +
+      "otra (cuentaOrigenId, cuentaDestinoId, amount, date opcional, note opcional): " +
+      "resta del origen y suma al destino. Sirve para retiros de cajero (banco → " +
+      "efectivo), consignaciones (efectivo → banco) o mover saldo entre cuentas. NO es " +
+      "gasto ni ingreso: es un movimiento neutro que solo afecta el saldo de las " +
+      "cuentas y NUNCA aparece en resumen_mes, estado_presupuestos ni listar_gastos. " +
+      "Consulta con listar_transferencias (filtros cuentaId/mes/año; con cuentaId " +
+      "devuelve los movimientos de esa cuenta) y revierte con borrar_transferencia " +
+      "(borrar_registro NO aplica: las transferencias no son finance_records). Al " +
+      "borrar una cuenta, sus transferencias se eliminan en cascada. " +
       "Deudas en tarjetas: una deuda recurrente (recurring_events category='deuda') " +
       "puede asociarse a una tarjeta con tarjetaId (en crear_deuda_recurrente o " +
       "actualizar_recurrente; null desvincula). La cuota del mes de las deudas " +

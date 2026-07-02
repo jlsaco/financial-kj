@@ -11,6 +11,9 @@ export type Category =
 
 export type UserId = "jose" | "karen" | "bot-correos";
 
+/** Tipo lógico de una cuenta: bancaria o efectivo (bolsa de dinero físico). */
+export type CuentaType = "bank" | "cash";
+
 export type IssueKind = "bug" | "mejora";
 
 export type IssueState = "open" | "closed";
@@ -170,6 +173,8 @@ export interface Cuenta {
   id: string;
   name: string;
   owner: UserId;
+  /** Tipo lógico: bank (bancaria) o cash (efectivo). Por defecto bank. */
+  type: CuentaType;
   /** Saldo inicial (punto de partida del cálculo). */
   initialBalance: number;
   isActive: boolean;
@@ -179,11 +184,36 @@ export interface Cuenta {
 /** Saldo calculado de una cuenta (UI/MCP). */
 export interface CuentaSaldo {
   cuenta: Cuenta;
-  /** Saldo actual = inicial + ingresos − gastos débito/efectivo − liquidaciones. */
+  /**
+   * Saldo actual = inicial + ingresos − gastos débito/efectivo − liquidaciones
+   * + transferencias recibidas − transferencias enviadas.
+   */
   balance: number;
   totalIngresos: number;
   totalGastos: number;
   totalLiquidaciones: number;
+  /** Total recibido por transferencias de otras cuentas. */
+  totalTransferenciasEntrada: number;
+  /** Total enviado por transferencias a otras cuentas. */
+  totalTransferenciasSalida: number;
+}
+
+/**
+ * Transferencia interna entre dos cuentas (p.ej. retiro de cajero: banco →
+ * efectivo). NO es gasto ni ingreso: solo mueve saldo de una cuenta a otra, por
+ * lo que no aparece en resumen_mes, presupuestos ni reportes de gastos/ingresos.
+ */
+export interface Transferencia {
+  id: string;
+  /** Cuenta de la que sale el dinero (resta de su saldo). */
+  cuentaOrigenId: string;
+  /** Cuenta a la que entra el dinero (suma a su saldo). */
+  cuentaDestinoId: string;
+  amount: number;
+  /** Fecha del movimiento (YYYY-MM-DD). */
+  date: string;
+  note?: string;
+  createdAt: string;
 }
 
 /**
