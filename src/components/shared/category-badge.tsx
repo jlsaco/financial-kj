@@ -8,6 +8,7 @@ import {
   CreditCard,
   Wifi,
   Popcorn,
+  Landmark,
 } from "lucide-react";
 
 const ICON_MAP = {
@@ -17,6 +18,7 @@ const ICON_MAP = {
   CreditCard,
   Wifi,
   Popcorn,
+  Landmark,
 };
 
 interface CategoryBadgeProps {

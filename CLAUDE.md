@@ -72,7 +72,8 @@ apoyados en los mismos stores para que no diverjan.
 ### Convenciones de dominio (mantener sincronizadas)
 
 - **Categorías válidas:** `movilidad`, `alimentacion-salud`,
-  `hogar-entretenimiento`, `deuda`, `servicios`, `entretenimiento`.
+  `hogar-entretenimiento`, `deuda`, `servicios`, `entretenimiento`,
+  `gastos-financieros`.
 - **Usuarios:** `jose`, `karen`, `bot-correos`.
 - **Tipos de registro:** `gasto`, `ingreso`.
 - Las deudas son `finance_records` con `category='deuda'`.
