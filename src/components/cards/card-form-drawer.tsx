@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn, Trash2, Archive, RotateCcw, Wallet } from "lucide-react";
+import { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn, Landmark, Trash2, Archive, RotateCcw, Wallet } from "lucide-react";
 import { UserSelector } from "@/components/shared/user-selector";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { useFinance } from "@/contexts/finance-context";
@@ -19,7 +19,7 @@ import { Category, UserId, Tarjeta } from "@/types";
 import { ALL_CATEGORIES, CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";
 
-const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn };
+const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn, Landmark };
 
 interface CardFormDrawerProps {
   open: boolean;

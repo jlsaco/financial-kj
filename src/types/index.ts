@@ -6,7 +6,8 @@ export type Category =
   | "hogar-entretenimiento"
   | "deuda"
   | "servicios"
-  | "entretenimiento";
+  | "entretenimiento"
+  | "gastos-financieros";
 
 export type UserId = "jose" | "karen" | "bot-correos";
 

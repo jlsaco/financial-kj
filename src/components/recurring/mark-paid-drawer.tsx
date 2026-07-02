@@ -18,6 +18,7 @@ import {
   CreditCard,
   Wifi,
   Popcorn,
+  Landmark,
   Plus,
   Link2,
   Search,
@@ -32,7 +33,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn };
+const CATEGORY_ICON_MAP = { Car, HeartPulse, Home, CreditCard, Wifi, Popcorn, Landmark };
 
 interface MarkPaidDrawerProps {
   open: boolean;

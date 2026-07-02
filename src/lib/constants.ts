@@ -51,6 +51,12 @@ export const CATEGORIES: Record<
     color: "bg-fuchsia-600",
     bgLight: "bg-fuchsia-50/80 text-fuchsia-800 border border-fuchsia-200/60",
   },
+  "gastos-financieros": {
+    label: "Gastos financieros",
+    icon: "Landmark",
+    color: "bg-teal-600",
+    bgLight: "bg-teal-50/80 text-teal-800 border border-teal-200/60",
+  },
 };
 
 export const RECORD_TYPE_CONFIG = {
@@ -69,6 +75,7 @@ export const ALL_CATEGORIES: Category[] = [
   "deuda",
   "servicios",
   "entretenimiento",
+  "gastos-financieros",
 ];
 
 export const ALL_USER_IDS: UserId[] = ["jose", "karen", "bot-correos"];
